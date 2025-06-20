@@ -1,143 +1,29 @@
 # RegOps AI Suite Backend
 
-A modern, secure backend for the RegOps AI Suite, built with FastAPI and following clean architecture principles.
+## Overview
+RegOps is an AI-powered compliance automation platform for streamlining regulatory operations. It features modular backend services (FastAPI, Python), a modern frontend (Next.js), and robust integrations for authentication, permit management, audits, and notifications.
 
-## Features
+---
 
-- 🔐 Secure authentication with JWT
-- ✉️ Email verification flow
-- 🔄 Token refresh mechanism
-- 🎯 Role-based access control
-- 📧 Email notifications
-- 🗄️ MongoDB integration
-- 🚀 FastAPI with async support
-- 🔍 Environment-aware logging and debugging
+## Key Features
+- **Authentication & Authorization**: JWT-based, role-based access, email verification, password setup
+- **Health Endpoint**: `/api/v1/health` for app and database status
+- **Singleton MongoDB Client**: Managed in `infrastructure/db.py` for efficient connection reuse
+- **Mailtrap API Integration**: For all transactional emails (no SMTP config)
+- **Clean Code Architecture**: Separation of concerns, modular services, infrastructure, and domain layers
+- **OpenAPI/Swagger**: JWT-protected endpoints show lock icon, all endpoints documented
 
-## Prerequisites
+---
 
-- Python 3.8+
-- MongoDB
-- Redis (for background tasks)
-- SMTP server for emails
-
-## Setup
-
-1. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+## Project Structure
 ```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Create a `.env` file in the root directory:
-```env
-# Environment
-ENV=development  # or production
-PORT=8000
-DEBUG=true  # automatically set based on ENV
-
-# Security
-SECRET_KEY=your-secret-key
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
-
-# MongoDB
-MONGODB_URL=mongodb://localhost:27017
-DATABASE_NAME=regops
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# Email
-SMTP_TLS=True
-SMTP_PORT=587
-SMTP_HOST=smtp.gmail.com
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-specific-password
-EMAILS_FROM_EMAIL=your-email@gmail.com
-EMAILS_FROM_NAME=RegOps AI Suite
-
-# CORS
-BACKEND_CORS_ORIGINS=["http://localhost:3000"]
-
-# Logging
-LOG_LEVEL=INFO  # automatically set based on ENV
-```
-
-4. Run the application:
-```bash
-# Development mode
-python -m app.main
-
-# Or using uvicorn directly
-uvicorn app.main:app --reload --port 8000
-```
-
-## Environment Configuration
-
-The application supports two environments:
-
-### Development
-- Detailed logging of all requests
-- Full error details in responses
-- Hot reload enabled
-- Debug mode active
-- Log level: INFO
-
-### Production
-- Minimal logging (WARNING and above)
-- Generic error messages
-- Hot reload disabled
-- Debug mode disabled
-- Log level: WARNING
-
-To switch environments, set the `ENV` variable in your `.env` file:
-```env
-ENV=production  # or development
-```
-
-## API Documentation
-
-Once the application is running, you can access:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Authentication Flow
-
-1. **Registration**
-   - User submits email and name
-   - System sends verification email
-
-2. **Email Verification**
-   - User clicks verification link
-   - System sends password setup email
-
-3. **Password Setup**
-   - User sets password
-   - Account becomes active
-
-4. **Login**
-   - User logs in with email and password
-   - System returns access and refresh tokens
-
-5. **Token Refresh**
-   - User can refresh access token using refresh token
-
-## Development
-
-### Project Structure
-
-```
-regops/
+regops/api/
 ├── app/
 │   ├── api/
 │   │   └── v1/
 │   │       └── endpoints/
-│   │           └── auth.py
+│   │           ├── auth.py
+│   │           └── health.py
 │   ├── core/
 │   │   └── config.py
 │   ├── domain/
@@ -145,6 +31,8 @@ regops/
 │   │   │   └── user.py
 │   │   └── schemas/
 │   │       └── auth.py
+│   ├── infrastructure/
+│   │   └── db.py
 │   ├── services/
 │   │   ├── auth_service.py
 │   │   └── email_service.py
@@ -156,26 +44,92 @@ regops/
 └── README.md
 ```
 
-### Running Tests
+---
 
-```bash
-pytest
+## Setup
+
+1. **Clone the repo and enter the directory**
+2. **Create a virtual environment and activate it**
+   ```bash
+   python -m venv env
+   source env/bin/activate  # or env\Scripts\activate on Windows
+   ```
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. **Create a `.env` file in `regops/api/`**
+   Example:
+   ```env
+   ENV=development
+   DEBUG=True
+   PORT=8000
+   PROJECT_NAME=RegOps AI Suite
+   VERSION=1.0.0
+   SECRET_KEY=your-secret-key
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   REFRESH_TOKEN_EXPIRE_DAYS=7
+   MONGODB_URL=mongodb://localhost:27017
+   DATABASE_NAME=regops
+   REDIS_URL=redis://localhost:6379
+   MAILTRAP_API_TOKEN=your-mailtrap-api-token
+   MAILTRAP_SENDER_EMAIL=your-sender@email.com
+   MAILTRAP_SENDER_NAME=RegOps AI Suite
+   MAILTRAP_INBOX_ID=your-inbox-id  # optional
+   BACKEND_CORS_ORIGINS=["http://localhost:3000"]
+   LOG_LEVEL=INFO
+   ```
+5. **Start MongoDB** (locally or via Docker)
+6. **Run the app**
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   # or use your configured port
+   uvicorn app.main:app --reload --port $PORT
+   ```
+
+---
+
+## Usage
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
+- **Auth Endpoints**: `/api/v1/auth/*` (register, verify-email, set-password, login, refresh, me)
+
+---
+
+## Clean Code & Architecture Notes
+- **main.py**: Only handles app wiring, middleware, router inclusion, and event hooks
+- **infrastructure/db.py**: Manages MongoDB client lifecycle and exposes `get_db` dependency
+- **services/**: Business logic (auth, email)
+- **domain/**: Pydantic models and schemas
+- **api/v1/endpoints/**: All API routes, modular and versioned
+- **No business or DB logic in main.py**
+- **All config from `.env`**
+
+---
+
+## Health Endpoint Example
+```json
+{
+  "status": "ok",
+  "database": "ok"
+}
+```
+If the database is unreachable:
+```json
+{
+  "status": "ok",
+  "database": "unreachable"
+}
 ```
 
-## Security Considerations
+---
 
-- All passwords are hashed using bcrypt
-- JWT tokens are used for authentication
-- Email verification is required before account activation
-- CORS is properly configured
-- Rate limiting is implemented
-- Input validation is enforced using Pydantic models
-- Environment-specific error handling and logging
+## Troubleshooting
+- If health check says `database: unreachable`, ensure MongoDB is running and accessible from your app environment (see README for WSL/Windows tips).
+- Always specify `--port` with Uvicorn if you want to override the default 8000.
+- All email is sent via Mailtrap API (no SMTP setup required).
+
+---
 
 ## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request 
+- Fork, branch, PR. Follow clean code and modularity guidelines. 
