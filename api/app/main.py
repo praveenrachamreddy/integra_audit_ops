@@ -4,14 +4,37 @@ from fastapi.responses import JSONResponse
 import time
 import logging
 from app.core.config import settings, logger
-from app.api.v1.endpoints import auth
+from app.api.v1.endpoints import auth, health
+from fastapi.openapi.utils import get_openapi
+from app.infrastructure.db import init_db, close_db
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
+    description="""
+RegOps API - AI-powered compliance automation platform.
+
+This API provides endpoints for authentication, permit management, audits, and more. All endpoints are documented below. JWT-protected endpoints show a lock icon and require a valid Bearer token.
+""",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     debug=settings.DEBUG
 )
+
+@app.on_event("startup")
+async def startup_event():
+    init_db(app)
+    logger.info("MongoDB client initialized.")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    close_db(app)
+    logger.info("MongoDB client closed.")
+
+@app.middleware("http")
+async def db_session_middleware(request: Request, call_next):
+    request.state.db = app.mongodb
+    response = await call_next(request)
+    return response
 
 # Set up CORS
 app.add_middleware(
@@ -24,6 +47,34 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["health"])
+
+# Custom OpenAPI schema with JWT Bearer
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            if "security" not in method:
+                method["security"] = []
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -56,7 +107,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 @app.get("/")
-async def root():
+async def root() -> dict:
+    """Root endpoint with API info."""
     return {
         "message": "Welcome to RegOps AI Suite API",
         "version": settings.VERSION,
@@ -71,4 +123,4 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=settings.PORT,
         reload=settings.ENV == "development"
-    ) 
+    )

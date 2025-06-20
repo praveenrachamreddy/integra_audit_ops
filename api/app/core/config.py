@@ -1,68 +1,51 @@
-from pydantic_settings import BaseSettings
-from pydantic import EmailStr, validator
-from typing import Optional, Literal
-import secrets
+import os
 import logging
+from typing import List
+import json
 
-class Settings(BaseSettings):
+class Settings:
     # Environment
-    ENV: Literal["development", "production"] = "development"
-    DEBUG: bool = True
-    PORT: int = 5050
+    ENV: str = os.getenv("ENV", "development")
+    DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
+    PORT: int = int(os.getenv("PORT", 9090))
     
     # Project Info
-    PROJECT_NAME: str = "RegOps AI Suite"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "RegOps AI Suite")
+    VERSION: str = os.getenv("VERSION", "1.0.0")
+    API_V1_STR: str = os.getenv("API_V1_STR", "/api/v1")
     
     # Security
-    SECRET_KEY: str = secrets.token_urlsafe(32)
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "changeme")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
     
     # MongoDB
-    MONGODB_URL: str = "mongodb://localhost:27017"
-    DATABASE_NAME: str = "regops"
+    MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "regops")
     
     # Redis
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     
-    # Email
-    SMTP_TLS: bool = True
-    SMTP_PORT: Optional[int] = None
-    SMTP_HOST: Optional[str] = None
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    EMAILS_FROM_EMAIL: Optional[EmailStr] = None
-    EMAILS_FROM_NAME: Optional[str] = None
+    # Mailtrap API
+    MAILTRAP_API_TOKEN: str = os.getenv("MAILTRAP_API_TOKEN", "")
+    MAILTRAP_SENDER_EMAIL: str = os.getenv("MAILTRAP_SENDER_EMAIL", "")
+    MAILTRAP_SENDER_NAME: str = os.getenv("MAILTRAP_SENDER_NAME", "RegOps AI Suite")
+    MAILTRAP_INBOX_ID: str = os.getenv("MAILTRAP_INBOX_ID", "")  # Optional
     
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    try:
+        BACKEND_CORS_ORIGINS: List[str] = json.loads(os.getenv("BACKEND_CORS_ORIGINS", '["http://localhost:3000"]'))
+    except Exception:
+        BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     
     # Logging
-    LOG_LEVEL: str = "INFO"
-    
-    @validator("DEBUG", pre=True)
-    def set_debug(cls, v, values):
-        if "ENV" in values:
-            return values["ENV"] == "development"
-        return v
-    
-    @validator("LOG_LEVEL", pre=True)
-    def set_log_level(cls, v, values):
-        if "ENV" in values and values["ENV"] == "production":
-            return "WARNING"
-        return v or "INFO"
-    
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
 settings = Settings()
 
 # Configure logging
 logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler()
