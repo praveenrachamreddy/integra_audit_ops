@@ -16,6 +16,7 @@ from app.domain.models.user import User, UserInDB
 from bson import ObjectId
 from jose import JWTError
 from app.infrastructure.db import get_db
+from datetime import datetime
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
@@ -46,13 +47,18 @@ async def register(
             detail="Email already registered"
         )
     verification_token = auth_service.create_verification_token()
-    user = UserInDB(
-        email=request.email,
-        full_name=request.full_name,
-        verification_token=verification_token
-    )
-    result = await db.users.insert_one(user.dict())
-    user.id = str(result.inserted_id)
+    user_doc = {
+        "email": request.email,
+        "first_name": request.first_name,
+        "last_name": request.last_name,
+        "role": "user",
+        "is_active": False,
+        "is_verified": False,
+        "verification_token": verification_token,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    result = await db.users.insert_one(user_doc)
     await email_service.send_verification_email(request.email, verification_token)
     return {"message": "Registration successful. Please check your email to verify your account."}
 
