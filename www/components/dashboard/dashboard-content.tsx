@@ -18,6 +18,15 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 
+// Import page components
+import { SmartPermitContent } from '@/components/dashboard/smart-permit-content';
+import { AuditGenieContent } from '@/components/dashboard/audit-genie-content';
+import { AssistantContent } from '@/components/dashboard/assistant-content';
+import { DocumentsContent } from '@/components/dashboard/documents-content';
+import { SettingsContent } from '@/components/dashboard/settings-content';
+import { HelpContent } from '@/components/dashboard/help-content';
+import { NotFoundContent } from '@/components/dashboard/not-found-content';
+
 const statCards = [
   {
     title: 'Active Permits',
@@ -86,7 +95,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export function DashboardContent() {
+function DashboardHomeContent() {
   const { permits, complianceChecks, setCurrentPage } = useAppStore();
 
   const containerVariants = {
@@ -245,7 +254,7 @@ export function DashboardContent() {
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Last checked: {check.lastChecked.toLocaleDateString()}
+                      Last checked: {new Date(check.lastChecked).toLocaleDateString()}
                     </div>
                     {check.issues.length > 0 && (
                       <div className="mt-1">
@@ -314,4 +323,28 @@ export function DashboardContent() {
       </motion.div>
     </motion.div>
   );
+}
+
+export function DashboardContent() {
+  const { currentPage } = useAppStore();
+
+  // Render content based on current page
+  switch (currentPage) {
+    case 'dashboard':
+      return <DashboardHomeContent />;
+    case 'smart-permit':
+      return <SmartPermitContent />;
+    case 'audit-genie':
+      return <AuditGenieContent />;
+    case 'assistant':
+      return <AssistantContent />;
+    case 'documents':
+      return <DocumentsContent />;
+    case 'settings':
+      return <SettingsContent />;
+    case 'help':
+      return <HelpContent />;
+    default:
+      return <NotFoundContent />;
+  }
 }
