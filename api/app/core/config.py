@@ -49,6 +49,17 @@ class Settings:
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
+    # GCP Vertex AI
+    GCP_PROJECT_ID: str = os.getenv("GCP_PROJECT_ID", "your-gcp-project-id")
+    GCP_LOCATION: str = os.getenv("GCP_LOCATION", "us-central1")
+    VERTEX_MODEL_NAME: str = os.getenv("VERTEX_MODEL_NAME", "gemini-1.5-pro-001")
+    VERTEX_MAX_OUTPUT_TOKENS: int = int(os.getenv("VERTEX_MAX_OUTPUT_TOKENS", 2048))
+    VERTEX_TEMPERATURE: float = float(os.getenv("VERTEX_TEMPERATURE", 0.7))
+    VERTEX_TOP_P: float = float(os.getenv("VERTEX_TOP_P", 0.95))
+
+    # ADK
+    ADK_MODEL_NAME: str = os.getenv("ADK_MODEL_NAME", "gemini-2.0-flash")
+
 settings = Settings()
 
 # Configure logging
