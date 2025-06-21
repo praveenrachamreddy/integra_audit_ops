@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 import time
 import logging
 from app.core.config import settings, logger
-from app.api.v1.endpoints import auth, health
+from app.api.v1.endpoints import auth, health, permits, audit, chat
 from fastapi.openapi.utils import get_openapi
 from app.infrastructure.db import init_db, close_db
 
@@ -48,6 +48,9 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["health"])
+app.include_router(permits.router, prefix=f"{settings.API_V1_STR}/permits", tags=["permits"])
+app.include_router(audit.router, prefix=f"{settings.API_V1_STR}/audit", tags=["audit"])
+app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
 
 # Custom OpenAPI schema with JWT Bearer
 
