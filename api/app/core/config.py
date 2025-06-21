@@ -2,6 +2,11 @@ import os
 import logging
 from typing import List
 import json
+from dotenv import load_dotenv
+from app.infrastructure.logger import Logger
+
+logger = Logger(__name__)
+load_dotenv()
 
 class Settings:
     # Environment
@@ -27,7 +32,10 @@ class Settings:
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
     
     # Mailtrap API
+    MAILTRAP_API_URL: str = os.getenv("MAILTRAP_API_URL", "https://send.api.mailtrap.io/api/send")
+    logger.data({"MAILTRAP_API_URL": MAILTRAP_API_URL})
     MAILTRAP_API_TOKEN: str = os.getenv("MAILTRAP_API_TOKEN", "")
+    logger.data({"MAILTRAP_API_TOKEN": MAILTRAP_API_TOKEN})
     MAILTRAP_SENDER_EMAIL: str = os.getenv("MAILTRAP_SENDER_EMAIL", "")
     MAILTRAP_SENDER_NAME: str = os.getenv("MAILTRAP_SENDER_NAME", "RegOps AI Suite")
     MAILTRAP_INBOX_ID: str = os.getenv("MAILTRAP_INBOX_ID", "")  # Optional

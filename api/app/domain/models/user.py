@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
+from bson import ObjectId
 
 class UserRole(str, Enum):
     USER = "user"
@@ -10,7 +11,8 @@ class UserRole(str, Enum):
 
 class UserBase(BaseModel):
     email: EmailStr
-    full_name: str
+    first_name: str
+    last_name: str
     role: UserRole = UserRole.USER
     is_active: bool = False
     is_verified: bool = False

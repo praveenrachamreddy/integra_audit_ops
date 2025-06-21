@@ -2,9 +2,10 @@ import httpx
 from app.core.config import settings
 from pathlib import Path
 import jinja2
+from app.infrastructure.logger import Logger
 
-MAILTRAP_API_URL = "https://send.api.mailtrap.io/api/send"
-
+MAILTRAP_API_URL = settings.MAILTRAP_API_URL
+logger = Logger(__name__)
 class EmailService:
     def __init__(self):
         self.api_token = settings.MAILTRAP_API_TOKEN
@@ -30,6 +31,7 @@ class EmailService:
             "html": html_content
         }
         async with httpx.AsyncClient() as client:
+            logger.data({"MAILTRAP_API_URL": MAILTRAP_API_URL, "headers": headers, "payload": payload})
             response = await client.post(MAILTRAP_API_URL, headers=headers, json=payload)
             response.raise_for_status()
 

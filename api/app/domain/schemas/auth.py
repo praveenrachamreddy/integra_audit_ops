@@ -2,7 +2,8 @@ from pydantic import BaseModel, EmailStr, constr
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    full_name: constr(min_length=2, max_length=100)
+    first_name: constr(min_length=1, max_length=50)
+    last_name: constr(min_length=1, max_length=50)
 
 class VerifyEmailRequest(BaseModel):
     token: str

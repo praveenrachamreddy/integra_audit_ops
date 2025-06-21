@@ -16,20 +16,22 @@ from app.domain.models.user import User, UserInDB
 from bson import ObjectId
 from jose import JWTError
 from app.infrastructure.db import get_db
+from datetime import datetime
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncIOMotorDatabase = Depends(get_db)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncIOMotorDatabase = Depends(get_db)) -> User:
     """Dependency to get the current user from JWT token."""
     try:
         payload = auth_service.verify_token(token)
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
-        user_data = db.users.find_one({"_id": ObjectId(user_id)})
+        user_data = await db.users.find_one({"_id": ObjectId(user_id)})
         if user_data is None:
             raise HTTPException(status_code=404, detail="User not found")
+        user_data["id"] = str(user_data.pop("_id"))
         return User(**user_data)
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -46,13 +48,18 @@ async def register(
             detail="Email already registered"
         )
     verification_token = auth_service.create_verification_token()
-    user = UserInDB(
-        email=request.email,
-        full_name=request.full_name,
-        verification_token=verification_token
-    )
-    result = await db.users.insert_one(user.dict())
-    user.id = str(result.inserted_id)
+    user_doc = {
+        "email": request.email,
+        "first_name": request.first_name,
+        "last_name": request.last_name,
+        "role": "user",
+        "is_active": False,
+        "is_verified": False,
+        "verification_token": verification_token,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    result = await db.users.insert_one(user_doc)
     await email_service.send_verification_email(request.email, verification_token)
     return {"message": "Registration successful. Please check your email to verify your account."}
 
@@ -134,6 +141,8 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
+    # Map MongoDB '_id' to 'id' for Pydantic model
+    user["id"] = str(user.pop("_id"))
     return auth_service.create_tokens(User(**user))
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -156,6 +165,8 @@ async def refresh_token(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found"
             )
+        # Map MongoDB '_id' to 'id' for Pydantic model
+        user["id"] = str(user.pop("_id"))
         return auth_service.create_tokens(User(**user))
     except JWTError:
         raise HTTPException(
