@@ -5,6 +5,7 @@ from app.domain.models.explanation_agent import (
 from app.agents.explanation_agent import ExplanationAgent
 from app.services.vertex_ai import VertexAIClient
 from app.services.adk import ADKClient
+from app.api.v1.endpoints.auth import get_current_user
 
 router = APIRouter()
 
@@ -16,7 +17,8 @@ def get_explanation_agent():
 @router.post("/message", response_model=ExplanationResponse)
 async def explain_message(
     request: ExplanationRequest,
-    agent: ExplanationAgent = Depends(get_explanation_agent)
+    agent: ExplanationAgent = Depends(get_explanation_agent),
+    current_user=Depends(get_current_user)
 ):
     result = await agent.explain(request.query)
     return ExplanationResponse(
