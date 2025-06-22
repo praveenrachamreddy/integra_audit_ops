@@ -7,12 +7,12 @@ class PermitAgent:
         self.adk = adk
 
     async def analyze_requirements(self, project_details: dict, user_id: str, session_id: str):
-        adk_result = await self.adk.run_agent("permit_analysis", project_details, user_id, session_id)
+        # Only use the LLM for /suggest
         llm_result = await self.vertex_ai.analyze(str(project_details))
         return {
-            "adk_result": adk_result,
+            "adk_result": None,  # For compatibility with response model
             "llm_result": llm_result
         }
 
-    async def generate_submission(self, permit_data: dict):
-        return await self.adk.run_agent("permit_submission", permit_data) 
+    async def generate_submission(self, permit_data: dict, user_id: str, session_id: str):
+        return await self.adk.run_agent("permit_submission", permit_data, user_id, session_id) 
