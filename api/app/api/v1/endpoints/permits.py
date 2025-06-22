@@ -36,5 +36,7 @@ async def submit_permit(
     agent: PermitAgent = Depends(get_permit_agent),
     current_user=Depends(get_current_user)
 ):
-    submission = await agent.generate_submission(request.permit_data)
+    user_id = str(current_user.id)
+    session_id = user_id  # Use user_id as session_id for stateless JWT
+    submission = await agent.generate_submission(request.permit_data, user_id=user_id, session_id=session_id)
     return PermitSubmissionResponse(submission=submission) 
