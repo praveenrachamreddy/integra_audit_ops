@@ -1,8 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Dict
 
+class ProjectDetails(BaseModel):
+    prompt: str = Field(..., description="Prompt for the agent")
+    # Add more fields as needed
+    class Config:
+        extra = "allow"
+
 class PermitSuggestRequest(BaseModel):
-    project_details: Dict[str, Any]
+    project_details: ProjectDetails
 
 class PermitSuggestResponse(BaseModel):
     requirements: str

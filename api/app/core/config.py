@@ -51,11 +51,14 @@ class Settings:
 
     # GCP Vertex AI
     GCP_PROJECT_ID: str = os.getenv("GCP_PROJECT_ID", "your-gcp-project-id")
+    GOOGLE_APPLICATION_CREDENTIALS: str = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+    GCP_PROJECT_NAME: str = os.getenv("GCP_PROJECT_NAME", "regops")
     GCP_LOCATION: str = os.getenv("GCP_LOCATION", "us-central1")
     VERTEX_MODEL_NAME: str = os.getenv("VERTEX_MODEL_NAME", "gemini-1.5-pro-001")
     VERTEX_MAX_OUTPUT_TOKENS: int = int(os.getenv("VERTEX_MAX_OUTPUT_TOKENS", 2048))
     VERTEX_TEMPERATURE: float = float(os.getenv("VERTEX_TEMPERATURE", 0.7))
     VERTEX_TOP_P: float = float(os.getenv("VERTEX_TOP_P", 0.95))
+    logger.data({"GOOGLE_APPLICATION_CREDENTIALS": GOOGLE_APPLICATION_CREDENTIALS})
 
     # ADK
     ADK_MODEL_NAME: str = os.getenv("ADK_MODEL_NAME", "gemini-2.0-flash")

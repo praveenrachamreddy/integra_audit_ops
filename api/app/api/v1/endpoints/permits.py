@@ -18,12 +18,14 @@ def get_permit_agent():
 @router.post("/suggest", response_model=PermitSuggestResponse)
 async def suggest_permit(
     request: PermitSuggestRequest,
-    agent: PermitAgent = Depends(get_permit_agent),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
+    agent: PermitAgent = Depends(get_permit_agent)
 ):
-    result = await agent.analyze_requirements(request.project_details)
+    user_id = str(current_user.id)
+    session_id = user_id  # Use user_id as session_id for stateless JWT
+    result = await agent.analyze_requirements(request.project_details, user_id=user_id, session_id=session_id)
     return PermitSuggestResponse(
-        requirements=result["llm_result"],
+        requirements="See agent results.",
         adk_result=result["adk_result"],
         llm_result=result["llm_result"]
     )
