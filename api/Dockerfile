@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential
 
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir --force-reinstall -r requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . /app
 
