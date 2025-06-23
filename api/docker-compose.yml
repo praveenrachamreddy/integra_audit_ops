@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  regops-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: regops-api
+    env_file:
+      - .env
+    ports:
+      - "9090:9090"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - regops-net
+    deploy:
+      resources:
+        limits:
+          memory: 2g # 2GB max for API
+    volumes:
+      - ./gcp-creds.json:/app/gcp-creds.json # Mount GCP credentials file
+
+  mongo:
+    image: mongo:6.0
+    container_name: regops-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - regops-net
+    deploy:
+      resources:
+        limits:
+          memory: 1g # 1GB max for MongoDB
+
+volumes:
+  mongo_data:
+
+networks:
+  regops-net:
+    driver: bridge 
