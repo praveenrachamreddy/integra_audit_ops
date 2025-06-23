@@ -162,4 +162,4 @@ If the database is unreachable:
 ---
 
 ## Contributing
-- Fork, branch, PR. Follow clean code and modularity guidelines.
+- Fork, branch, PR. Follow clean code and modularity guidelines. 
