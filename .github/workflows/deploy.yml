@@ -21,6 +21,10 @@ jobs:
           mkdir -p regops/api
           echo "${{ secrets.API_ENV_FILE }}" > regops/api/.env
 
+      - name: Ensure remote target directory exists
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "mkdir -p ~/regops/api"     
+
       - name: Copy code and .env to VM
         run: |
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./regops/api/ ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:~/regops/api/
