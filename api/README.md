@@ -10,6 +10,7 @@ RegOps is an AI-powered compliance automation platform for streamlining regulato
 - **Health Endpoint**: `/api/v1/health` for app and database status
 - **Singleton MongoDB Client**: Managed in `infrastructure/db.py` for efficient connection reuse
 - **Mailtrap API Integration**: For all transactional emails (no SMTP config)
+- **Audit Endpoint**: Run compliance audits and retrieve results via `/api/v1/audit`
 - **Clean Code Architecture**: Separation of concerns, modular services, infrastructure, and domain layers
 - **OpenAPI/Swagger**: JWT-protected endpoints show lock icon, all endpoints documented
 
@@ -93,6 +94,35 @@ regops/api/
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 - **Auth Endpoints**: `/api/v1/auth/*` (register, verify-email, set-password, login, refresh, me)
+- **Audit Endpoint**: `/api/v1/audit` (run and retrieve compliance audits)
+
+### Audit Endpoint
+
+- **POST /api/v1/audit**
+  - **Description:** Run a compliance audit for a given permit or entity.
+  - **Auth:** Requires JWT access token (Bearer).
+  - **Request Body Example:**
+    ```json
+    {
+      "permit_id": "1234567890abcdef",
+      "parameters": {
+        "region": "EU",
+        "type": "environmental"
+      }
+    }
+    ```
+  - **Response Example:**
+    ```json
+    {
+      "audit_id": "audit_abc123",
+      "status": "completed",
+      "result": {
+        "compliant": true,
+        "issues": []
+      }
+    }
+    ```
+  - **Notes:** Audits may run asynchronously; check status with `GET /api/v1/audit/{audit_id}`.
 
 ---
 

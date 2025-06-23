@@ -1,0 +1,45 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches: [api-development]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.GCP_SSH_KEY }}
+
+      - name: Write .env file from secret
+        run: |
+          mkdir -p api
+          echo "${{ secrets.API_ENV_FILE }}" > api/.env
+
+      - name: Ensure remote target directory exists
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "mkdir -p ~/regops/api"
+
+      - name: Copy code and .env to VM
+        run: |
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./api/ ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:~/regops/api/
+
+      - name: Write GCP credentials file on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "echo '${{ secrets.GCP_CREDENTIALS_JSON }}' > ~/regops/api/gcp-creds.json"
+
+      - name: Deploy on VM
+        run: |
+            ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
+              cd ~/regops/api && \
+              ls -la && \
+              docker compose down && \
+              docker compose pull || true && \
+              docker compose build && \
+              docker compose up -d --remove-orphans
+            "
