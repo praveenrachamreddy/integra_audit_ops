@@ -167,7 +167,7 @@ export function LoginForm({ onToggleMode, onForgotPassword }: LoginFormProps) {
 
       <div className="mt-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Button variant="link" className="px-0" onClick={onToggleMode}>
             Sign up
           </Button>

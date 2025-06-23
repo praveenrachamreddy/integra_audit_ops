@@ -28,7 +28,7 @@ const values = [
   {
     icon: Lightbulb,
     title: 'Innovation',
-    description: 'We continuously push the boundaries of what\'s possible in regulatory technology.'
+    description: 'We continuously push the boundaries of what&apos;s possible in regulatory technology.'
   },
   {
     icon: Users,
@@ -38,7 +38,7 @@ const values = [
   {
     icon: Heart,
     title: 'Impact',
-    description: 'We\'re driven by making a meaningful difference in how businesses handle compliance.'
+    description: 'We&apos;re driven by making a meaningful difference in how businesses handle compliance.'
   }
 ];
 
@@ -96,7 +96,7 @@ export default function AboutPage() {
                 <span className="text-primary block">Compliance</span>
               </h1>
               <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                We're on a mission to make regulatory compliance accessible, efficient, 
+                We&apos;re on a mission to make regulatory compliance accessible, efficient, 
                 and intelligent for businesses of all sizes through cutting-edge AI technology.
               </p>
               <Badge variant="outline" className="text-lg py-2 px-4">
@@ -314,7 +314,7 @@ export default function AboutPage() {
                 Our Journey
               </h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                From concept to reality, here's how we're building the future of regulatory compliance.
+                From concept to reality, here&apos;s how we&apos;re building the future of regulatory compliance.
               </p>
             </motion.div>
 

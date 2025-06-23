@@ -26,7 +26,7 @@ const contactMethods = [
   {
     icon: Mail,
     title: 'Email Us',
-    description: 'Send us an email and we\'ll respond within 24 hours',
+    description: 'Send us an email and we&apos;ll respond within 24 hours',
     contact: 'hello@regops.ai',
     action: 'mailto:hello@regops.ai'
   },
@@ -86,7 +86,7 @@ export default function ContactPage() {
     
     // Simulate form submission
     setTimeout(() => {
-      alert('Thank you for your message! We\'ll get back to you soon.');
+      alert('Thank you for your message! We&apos;ll get back to you soon.');
       setFormData({ name: '', email: '', company: '', inquiryType: '', message: '' });
       setIsSubmitting(false);
     }, 1000);
@@ -116,7 +116,7 @@ export default function ContactPage() {
               </h1>
               <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
                 Have questions about RegOps? Want to discuss a partnership? 
-                We'd love to hear from you and help with your regulatory compliance needs.
+                We&apos;d love to hear from you and help with your regulatory compliance needs.
               </p>
             </motion.div>
           </div>
@@ -187,7 +187,7 @@ export default function ContactPage() {
                   <CardHeader>
                     <CardTitle className="text-2xl">Send Us a Message</CardTitle>
                     <p className="text-muted-foreground">
-                      Fill out the form below and we'll get back to you as soon as possible.
+                      Fill out the form below and we&apos;ll get back to you as soon as possible.
                     </p>
                   </CardHeader>
                   <CardContent>

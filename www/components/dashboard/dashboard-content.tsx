@@ -126,7 +126,7 @@ function DashboardHomeContent() {
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your regulatory operations.
+          Welcome back! Here&apos;s an overview of your regulatory operations.
         </p>
       </motion.div>
 

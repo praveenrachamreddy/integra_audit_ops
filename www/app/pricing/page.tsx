@@ -225,7 +225,7 @@ export default function PricingPage() {
               className="text-center mb-16"
             >
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-                What's Included
+                What&apos;s Included
               </h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
                 All plans include our comprehensive suite of regulatory compliance tools 
@@ -282,7 +282,7 @@ export default function PricingPage() {
               {[
                 {
                   question: 'When will pricing be available?',
-                  answer: 'We\'re currently in development and will announce pricing details soon. Sign up for our newsletter to be the first to know about pricing and launch updates.'
+                  answer: 'We&apos;re currently in development and will announce pricing details soon. Sign up for our newsletter to be the first to know about pricing and launch updates.'
                 },
                 {
                   question: 'Will there be a free trial?',
@@ -290,7 +290,7 @@ export default function PricingPage() {
                 },
                 {
                   question: 'Can I change plans later?',
-                  answer: 'Absolutely. You\'ll be able to upgrade or downgrade your plan at any time to match your business needs.'
+                  answer: 'Absolutely. You&apos;ll be able to upgrade or downgrade your plan at any time to match your business needs.'
                 },
                 {
                   question: 'What about enterprise features?',

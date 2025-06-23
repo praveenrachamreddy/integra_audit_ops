@@ -97,7 +97,7 @@ export function HomepageNavbar() {
                         {getUserFullName(user)}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
                       </span>
                     </div>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />

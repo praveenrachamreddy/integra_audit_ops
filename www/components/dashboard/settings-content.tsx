@@ -100,7 +100,7 @@ export function SettingsContent() {
               Settings Panel
             </h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              This feature is coming soon! You'll be able to customize your account settings, 
+              This feature is coming soon! You&apos;ll be able to customize your account settings, 
               notifications, security preferences, and more.
             </p>
             <Button variant="outline">
