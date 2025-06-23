@@ -18,6 +18,7 @@ jobs:
 
       - name: Write .env file from secret
         run: |
+          mkdir -p regops/api
           echo "${{ secrets.API_ENV_FILE }}" > regops/api/.env
 
       - name: Copy code and .env to VM
