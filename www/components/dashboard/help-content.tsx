@@ -40,7 +40,7 @@ export function HelpContent() {
     {
       icon: Mail,
       title: 'Email Support',
-      description: 'Send us an email and we\'ll get back to you',
+      description: 'Send us an email and we&apos;ll get back to you',
       color: 'text-purple-600',
       bgColor: 'bg-purple-50 dark:bg-purple-950',
     },
@@ -100,7 +100,7 @@ export function HelpContent() {
               Help Center
             </h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              This feature is coming soon! You'll have access to comprehensive documentation, 
+              This feature is coming soon! You&apos;ll have access to comprehensive documentation, 
               live chat support, and direct contact with our regulatory experts.
             </p>
             <div className="space-y-2 text-sm text-muted-foreground mb-6">

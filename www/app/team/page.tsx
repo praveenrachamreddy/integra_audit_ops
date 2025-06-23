@@ -88,7 +88,7 @@ export default function TeamPage() {
               Meet Our Team
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              The passionate developers behind RegOps, dedicated to simplifying regulatory compliance through innovative technology.
+              We&apos;re a diverse team of technologists, regulatory experts, and innovators
             </p>
           </motion.div>
         </div>
@@ -215,7 +215,7 @@ export default function TeamPage() {
               Want to Join Our Team?
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              We're always looking for talented individuals who are passionate about regulatory technology and making compliance easier for businesses.
+              We&apos;re always looking for talented individuals who are passionate about regulatory technology and making compliance easier for businesses.
             </p>
             <Link href="/contact">
               <Button size="lg" className="px-8">

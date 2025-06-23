@@ -82,7 +82,7 @@ export function DocumentsContent() {
                 Document Management
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                This feature is coming soon! You'll be able to upload, organize, and manage 
+                This feature is coming soon! You&apos;ll be able to upload, organize, and manage 
                 all your regulatory documents in one secure location.
               </p>
               <Button>

@@ -257,7 +257,7 @@ export default function LoginPage() {
                   </form>
 
                   <div className="text-center text-sm text-muted-foreground">
-                    <p>After registration, you'll receive an email to:</p>
+                    <p>After registration, you&apos;ll receive an email to:</p>
                     <p>1. Verify your email address</p>
                     <p>2. Set up your password</p>
                   </div>
