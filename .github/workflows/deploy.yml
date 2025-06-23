@@ -18,16 +18,16 @@ jobs:
 
       - name: Write .env file from secret
         run: |
-          mkdir -p regops/api
-          echo "${{ secrets.API_ENV_FILE }}" > regops/api/.env
+          mkdir -p api
+          echo "${{ secrets.API_ENV_FILE }}" > api/.env
 
       - name: Ensure remote target directory exists
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "mkdir -p ~/regops/api"     
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "mkdir -p ~/regops/api"
 
       - name: Copy code and .env to VM
         run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./regops/api/ ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:~/regops/api/
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./api/ ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:~/regops/api/
 
       - name: Write GCP credentials file on VM
         run: |
