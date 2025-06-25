@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { HomepageNavbar } from '@/components/layout/homepage-navbar';
+import HomepageNavbar from '@/components/layout/homepage-navbar';
 
 const pricingPlans = [
   {

@@ -1,33 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { AppSidebar } from '@/components/layout/app-sidebar';
-import { MobileNav } from '@/components/layout/mobile-nav';
-import { DashboardNavbar } from '@/components/layout/dashboard-navbar';
+import { useAuthGuard } from '@/lib/hooks/use-auth-guard';
+import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
 
-export default function DashboardLayout({
-  children,
-}: {
+interface DashboardLayoutProps {
   children: React.ReactNode;
-}) {
-  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
-  const router = useRouter();
+}
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+export default function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
+  const { isLoading } = useAuthGuard({ requireAuth: true });
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
+  // Show loading screen while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Loading dashboard...</p>
@@ -36,35 +22,18 @@ export default function DashboardLayout({
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Navigation - Shows on small screens */}
-      <div className="lg:hidden">
-        <MobileNav />
-      </div>
-
-      <div className="lg:flex lg:h-screen">
-        {/* Desktop Sidebar - Shows on large screens */}
-        <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
-          <AppSidebar />
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
+          <DashboardSidebar />
         </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 lg:flex lg:flex-col lg:overflow-hidden">
-          {/* Desktop Navbar - Shows on large screens */}
-          <div className="hidden lg:block">
-            <DashboardNavbar />
-          </div>
-
-          {/* Page Content with uniform padding */}
-          <main className="flex-1 overflow-y-auto bg-background">
-            <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full">
-              {children}
-            </div>
+        
+        {/* Main content */}
+        <div className="flex-1 lg:ml-64">
+          <main className="flex-1">
+            {children}
           </main>
         </div>
       </div>
