@@ -42,9 +42,9 @@ class Settings:
     
     # CORS
     try:
-        BACKEND_CORS_ORIGINS: List[str] = json.loads(os.getenv("BACKEND_CORS_ORIGINS", '["http://localhost:3000"]'))
+        BACKEND_CORS_ORIGINS: List[str] = json.loads(os.getenv("BACKEND_CORS_ORIGINS", '["http://localhost:3000", "https://regopsai.buzz"]'))
     except Exception:
-        BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+        BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://regopsai.buzz"]
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

@@ -38,8 +38,8 @@ jobs:
             ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
               cd ~/regops/api && \
               ls -la && \
-              docker compose down && \
-              docker compose pull || true && \
-              docker compose build && \
-              docker compose up -d --remove-orphans
+              docker compose down regops-api || true && \
+              docker compose pull regops-api || true && \
+              docker compose build regops-api && \
+              docker compose up -d --remove-orphans regops-api
             "
