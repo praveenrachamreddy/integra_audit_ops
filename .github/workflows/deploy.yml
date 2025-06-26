@@ -31,7 +31,11 @@ jobs:
 
       - name: Write GCP credentials file on VM
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "echo '${{ secrets.GCP_CREDENTIALS_JSON }}' > ~/regops/api/gcp-creds.json"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "printf '%s' '${{ secrets.GCP_CREDENTIALS_JSON }}' > ~/regops/api/gcp-creds.json"
+
+      - name: Check for gcp-creds.json on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "ls -l ~/regops/api/gcp-creds.json && cat ~/regops/api/gcp-creds.json && python3 -c 'import json; json.load(open(\"~/regops/api/gcp-creds.json\"))' || (echo 'Invalid JSON!' && exit 1)"
 
       - name: Deploy on VM
         run: |
