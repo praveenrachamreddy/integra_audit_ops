@@ -8,9 +8,9 @@ class PermitAgent:
 
     async def analyze_requirements(self, project_details: dict, user_id: str, session_id: str):
         # Only use the LLM for /suggest
-        llm_result = await self.vertex_ai.analyze(str(project_details))
+        llm_result = await self.vertex_ai.analyze(project_details.prompt)
         return {
-            "adk_result": None,  # For compatibility with response model
+            "adk_result": {},  # Return an empty dict instead of None
             "llm_result": llm_result
         }
 
