@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { HomepageNavbar } from '@/components/layout/homepage-navbar';
+import HomepageNavbar from '@/components/layout/homepage-navbar';
 
 const values = [
   {

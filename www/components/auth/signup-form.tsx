@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,21 +11,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const signupSchema = z.object({
-  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-  company: z.string().min(2, 'Company name must be at least 2 characters'),
-  location: z.string().min(2, 'Location must be at least 2 characters'),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 type SignupForm = z.infer<typeof signupSchema>;
@@ -35,43 +29,76 @@ interface SignupFormProps {
 }
 
 export function SignupForm({ onToggleMode }: SignupFormProps) {
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const { signup, isLoading, error } = useAuthStore();
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const { register, isLoading, error, clearError } = useAuthStore();
 
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      fullName: '',
+      firstName: '',
+      lastName: '',
       email: '',
-      password: '',
-      confirmPassword: '',
-      company: '',
-      location: '',
       agreeToTerms: false,
     },
   });
 
-  const onSubmit = (data: SignupForm) => {
-    signup({
-      fullName: data.fullName,
-      email: data.email,
-      company: data.company,
-      location: data.location,
-      role: 'user',
-      password: data.password,
-    }).catch(() => {
-        // The store now handles the error state, so we just need to catch the promise rejection
-        // to prevent an unhandled promise rejection warning.
-        // The error message will be displayed via the 'error' state from the store.
-    })
+  const onSubmit = async (data: SignupForm) => {
+    clearError();
+    try {
+      await register(data.email, data.firstName, data.lastName);
+      setIsSubmitted(true);
+    } catch (error) {
+      // Error is handled by the store
+    }
   };
 
-  React.useEffect(() => {
-    if(error){
-      toast.error(error);
-    }
-  }, [error]);
+  if (isSubmitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md mx-auto text-center space-y-6"
+      >
+        <div className="space-y-4">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto">
+            <Mail className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Check Your Email!
+            </h2>
+            <p className="text-muted-foreground">
+              We&apos;ve sent a verification link to your email address. Please check your email and click the link to verify your account.
+            </p>
+          </div>
+        </div>
+
+        <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+          <Mail className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Next steps:</strong> After verifying your email, you&apos;ll receive another email with instructions to set up your password.
+          </AlertDescription>
+        </Alert>
+
+        <div className="space-y-2">
+          <Button 
+            onClick={() => setIsSubmitted(false)} 
+            variant="outline" 
+            className="w-full"
+          >
+            Register Another Account
+          </Button>
+          <Button 
+            onClick={onToggleMode} 
+            className="w-full"
+          >
+            Back to Sign In
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -89,22 +116,48 @@ export function SignupForm({ onToggleMode }: SignupFormProps) {
         </p>
       </div>
 
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="fullName">Full name</Label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="Enter your full name"
-              className="mt-1"
-              {...form.register('fullName')}
-            />
-            {form.formState.errors.fullName && (
-              <p className="text-sm text-destructive mt-1">
-                {form.formState.errors.fullName.message}
-              </p>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                placeholder="First name"
+                className="mt-1"
+                disabled={isLoading}
+                {...form.register('firstName')}
+              />
+              {form.formState.errors.firstName && (
+                <p className="text-sm text-destructive mt-1">
+                  {form.formState.errors.firstName.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                type="text"
+                placeholder="Last name"
+                className="mt-1"
+                disabled={isLoading}
+                {...form.register('lastName')}
+              />
+              {form.formState.errors.lastName && (
+                <p className="text-sm text-destructive mt-1">
+                  {form.formState.errors.lastName.message}
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -114,107 +167,12 @@ export function SignupForm({ onToggleMode }: SignupFormProps) {
               type="email"
               placeholder="Enter your email"
               className="mt-1"
+              disabled={isLoading}
               {...form.register('email')}
             />
             {form.formState.errors.email && (
               <p className="text-sm text-destructive mt-1">
                 {form.formState.errors.email.message}
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
-                type="text"
-                placeholder="Company name"
-                className="mt-1"
-                {...form.register('company')}
-              />
-              {form.formState.errors.company && (
-                <p className="text-sm text-destructive mt-1">
-                  {form.formState.errors.company.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                type="text"
-                placeholder="City, State"
-                className="mt-1"
-                {...form.register('location')}
-              />
-              {form.formState.errors.location && (
-                <p className="text-sm text-destructive mt-1">
-                  {form.formState.errors.location.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <div className="relative mt-1">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create a password"
-                className="pr-10"
-                {...form.register('password')}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
-            </div>
-            {form.formState.errors.password && (
-              <p className="text-sm text-destructive mt-1">
-                {form.formState.errors.password.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="confirmPassword">Confirm password</Label>
-            <div className="relative mt-1">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
-                className="pr-10"
-                {...form.register('confirmPassword')}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
-            </div>
-            {form.formState.errors.confirmPassword && (
-              <p className="text-sm text-destructive mt-1">
-                {form.formState.errors.confirmPassword.message}
               </p>
             )}
           </div>
@@ -228,6 +186,7 @@ export function SignupForm({ onToggleMode }: SignupFormProps) {
               form.setValue('agreeToTerms', !!checked)
             }
             className="mt-1"
+            disabled={isLoading}
           />
           <Label
             htmlFor="agreeToTerms"
@@ -249,19 +208,19 @@ export function SignupForm({ onToggleMode }: SignupFormProps) {
           </p>
         )}
 
-        {error && !form.formState.isSubmitting && (
-          <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
-        )}
-
         <Button
           type="submit"
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLoading ? 'Creating account...' : 'Create account'}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            'Create account'
+          )}
         </Button>
       </form>
 

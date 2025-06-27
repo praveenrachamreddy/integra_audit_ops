@@ -1,25 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Define protected routes
+// Define protected routes (for reference only - actual auth is handled client-side)
 const protectedRoutes = ['/dashboard', '/smart-permit', '/audit-genie', '/assistant', '/documents', '/settings'];
 const authRoutes = ['/login'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Check if user is authenticated (simplified - in production, verify JWT)
-  const isAuthenticated = request.cookies.get('auth-storage')?.value?.includes('"isAuthenticated":true');
-  
-  // Redirect authenticated users away from auth pages
-  if (isAuthenticated && authRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-  
-  // Redirect unauthenticated users to login
-  if (!isAuthenticated && protectedRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+  // Note: Authentication is handled client-side using useAuthGuard hook
+  // This middleware is kept for potential future server-side auth implementation
+  // but currently doesn't perform any authentication checks
   
   return NextResponse.next();
 }

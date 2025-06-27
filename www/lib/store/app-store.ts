@@ -1,10 +1,14 @@
 import { create } from 'zustand';
 
+type PermitStatus = 'approved' | 'rejected' | 'pending' | 'under_review';
+type ComplianceStatus = 'compliant' | 'non_compliant' | 'warning' | 'pending';
+type Theme = 'light' | 'dark' | 'system';
+
 interface Permit {
   id: string;
   title: string;
   type: string;
-  status: 'approved' | 'rejected' | 'pending' | 'under_review';
+  status: PermitStatus;
   progress: number;
   submittedDate: string;
   lastUpdated: string;
@@ -14,7 +18,7 @@ interface ComplianceCheck {
   id: string;
   title: string;
   type: string;
-  status: 'compliant' | 'non_compliant' | 'warning' | 'pending';
+  status: ComplianceStatus;
   lastChecked: string;
   issues: string[];
   score?: number;
@@ -22,13 +26,13 @@ interface ComplianceCheck {
 
 interface AppState {
   sidebarOpen: boolean;
-  theme: 'light' | 'dark' | 'system';
+  theme: Theme;
   currentPage: string;
   permits: Permit[];
   complianceChecks: ComplianceCheck[];
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setTheme: (theme: Theme) => void;
   setCurrentPage: (page: string) => void;
 }
 
@@ -126,7 +130,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({ sidebarOpen: !state.sidebarOpen }));
   },
   
-  setTheme: (theme: 'light' | 'dark' | 'system') => {
+  setTheme: (theme: Theme) => {
     set({ theme });
   },
   

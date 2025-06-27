@@ -1,72 +1,82 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { AppSidebar } from '@/components/layout/app-sidebar';
+import { useAuthGuard } from '@/lib/hooks/use-auth-guard';
+import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
+import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { MobileNav } from '@/components/layout/mobile-nav';
-import { DashboardNavbar } from '@/components/layout/dashboard-navbar';
+import { useState } from 'react';
 
-export default function DashboardLayout({
-  children,
-}: {
+interface DashboardLayoutProps {
   children: React.ReactNode;
-}) {
-  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
-  const router = useRouter();
+}
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+export default function DashboardLayout({ children }: Readonly<DashboardLayoutProps>) {
+  const { isLoading } = useAuthGuard({ requireAuth: true });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
+  // Show loading screen while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-16 h-16 border-2 border-primary/10 rounded-full animate-ping"></div>
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">Loading Dashboard</h3>
+            <p className="text-sm text-muted-foreground">Preparing your regulatory command center...</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Navigation - Shows on small screens */}
-      <div className="lg:hidden">
-        <MobileNav />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Mobile Navigation */}
+      <MobileNav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+        <DashboardSidebar />
       </div>
 
-      <div className="lg:flex lg:h-screen">
-        {/* Desktop Sidebar - Shows on large screens */}
-        <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
-          <AppSidebar />
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 lg:flex lg:flex-col lg:overflow-hidden">
-          {/* Desktop Navbar - Shows on large screens */}
-          <div className="hidden lg:block">
-            <DashboardNavbar />
-          </div>
-
-          {/* Page Content with uniform padding */}
-          <main className="flex-1 overflow-y-auto bg-background">
-            <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      {/* Main Content Area */}
+      <div className="lg:pl-72">
+        {/* Header */}
+        <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
+        
+        {/* Page Content */}
+        <main className="min-h-[calc(100vh-4rem)]">
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mx-auto max-w-7xl">
               {children}
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-border/50 bg-background/50 backdrop-blur-sm">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <div className="text-sm text-muted-foreground">
+                © 2024 RegOps. Powered by AI. Built for compliance excellence.
+              </div>
+              <div className="flex space-x-6 text-sm">
+                <a href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+                  Privacy
+                </a>
+                <a href="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+                  Terms
+                </a>
+                <a href="/support" className="text-muted-foreground hover:text-primary transition-colors">
+                  Support
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

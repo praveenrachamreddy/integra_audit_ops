@@ -6,10 +6,11 @@ import { ArrowRight, CheckCircle, Shield, Zap, Users, ExternalLink } from 'lucid
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/store/auth-store';
-import { HomepageNavbar } from '@/components/layout/homepage-navbar';
+import HomepageNavbar from '@/components/layout/homepage-navbar';
 import { Footer } from '@/components/layout/footer';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 const features = [
   {
@@ -37,13 +38,12 @@ const benefits = [
 ];
 
 export default function HomePage() {
-  const { checkAuthStatus } = useAuthStore();
   const router = useRouter();
+  const { isAuthenticated, initialize } = useAuthStore();
 
   useEffect(() => {
-    // Check auth status on mount but don't redirect
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+    initialize();
+  }, [initialize]);
 
   const handleGetStarted = () => {
     router.push('/login');
