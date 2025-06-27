@@ -266,6 +266,11 @@ class ApiClient {
     TokenManager.clearTokens();
     toast.success('Logged out successfully');
   }
+
+  // Utility method for other API clients
+  getAccessToken(): string | null {
+    return TokenManager.getAccessToken();
+  }
 }
 
 // Custom error class
