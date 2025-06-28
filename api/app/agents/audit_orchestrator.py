@@ -53,7 +53,7 @@ class AuditOrchestrator:
         report_sections = []
         for issue in enriched_issues:
             report_sections.append({
-                "title": f"Issue: {issue.get('description', 'N/A')[:40]}...",
+                "title": f"Issue: {issue.get('description', 'N/A')}",
                 "content": f"Severity: {issue.get('severity', 'N/A')}\n\nRecommendation: {issue.get('recommendation', 'N/A')}",
                 "flagged": True
             })
