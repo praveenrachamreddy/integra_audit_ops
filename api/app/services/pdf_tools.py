@@ -5,7 +5,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from tempfile import NamedTemporaryFile
 from motor.motor_asyncio import AsyncIOMotorDatabase
-import gridfs
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 
 def extract_pdf_content(file_path: str) -> str:
     """
@@ -75,7 +75,7 @@ def generate_pdf_report(
         return tmpfile.name 
 
 def get_gridfs(db: AsyncIOMotorDatabase):
-    return gridfs.AsyncIOMotorGridFSBucket(db)
+    return AsyncIOMotorGridFSBucket(db)
 
 async def save_pdf_to_db(db: AsyncIOMotorDatabase, file_path: str, filename: str, metadata: Optional[dict] = None) -> str:
     """

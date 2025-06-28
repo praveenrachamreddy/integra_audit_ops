@@ -10,7 +10,7 @@ from app.api.v1.endpoints.auth import get_current_user
 from app.services.pdf_tools import get_pdf_from_db
 from app.infrastructure.db import mongodb
 from bson import ObjectId
-import gridfs
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 
 router = APIRouter()
 
@@ -25,7 +25,6 @@ async def run_audit(
     audit_details: str = Form(...),  # JSON string, will parse below
     mongo_uri: str = Form(None),
     documents: list[UploadFile] = File([]),
-    system_logs: list[UploadFile] = File([]),
     agent: AuditAgent = Depends(get_audit_agent),
     current_user=Depends(get_current_user)
 ):
@@ -37,7 +36,6 @@ async def run_audit(
         audit_type=audit_type,
         mongo_uri=mongo_uri,
         documents=documents,
-        system_logs=system_logs,
         user_id=str(current_user.id),
         session_id=str(current_user.id)
     )
@@ -63,7 +61,7 @@ async def get_audit_history(
 async def serve_pdf(file_id: str, current_user=Depends(get_current_user)):
     try:
         # Check ownership or admin
-        fs = gridfs.AsyncIOMotorGridFSBucket(mongodb.db)
+        fs = AsyncIOMotorGridFSBucket(mongodb.db)
         from bson.errors import InvalidId
         try:
             oid = ObjectId(file_id)

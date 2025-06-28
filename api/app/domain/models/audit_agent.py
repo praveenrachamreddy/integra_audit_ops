@@ -1,5 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
+
+class AuditIssue(BaseModel):
+    severity: str
+    description: str
+    recommendation: str
 
 class AuditReportSection(BaseModel):
     title: str
@@ -14,9 +19,9 @@ class AuditRunRequest(BaseModel):
 
 class AuditRunResponse(BaseModel):
     adk_result: Optional[dict] = None
-    llm_result: Optional[str] = None
+    llm_result: Optional[dict] = None
     score: Optional[int] = None
-    issues: Optional[List[str]] = None
+    issues: Optional[List[AuditIssue]] = None
     report_sections: Optional[List[AuditReportSection]] = None
     pdf_url: Optional[str] = None
 
