@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Response, HTTPException
-from app.domain.models.audit_agent import (
-    AuditRunRequest, AuditRunResponse,
-    AuditHistoryRequest, AuditHistoryResponse
-)
-from app.agents.audit_agent import AuditAgent
+from app.domain.models.audit_orchestrator import AuditRunResponse, AuditHistoryResponse
+from app.agents.audit_orchestrator import AuditOrchestrator
 from app.services.vertex_ai import VertexAIClient
 from app.services.adk import ADKClient
 from app.api.v1.endpoints.auth import get_current_user
@@ -14,10 +11,10 @@ from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 
 router = APIRouter()
 
-def get_audit_agent():
+def get_audit_orchestrator():
     vertex_ai = VertexAIClient()
     adk = ADKClient()
-    return AuditAgent(vertex_ai, adk)
+    return AuditOrchestrator(vertex_ai, adk)
 
 @router.post("/run", response_model=AuditRunResponse)
 async def run_audit(
@@ -26,13 +23,13 @@ async def run_audit(
     audit_scope: str = Form(...),
     control_families: str = Form(..., description="A comma-separated list of control families to evaluate."),
     documents: list[UploadFile] = File(...),
-    agent: AuditAgent = Depends(get_audit_agent),
+    orchestrator: AuditOrchestrator = Depends(get_audit_orchestrator),
     current_user=Depends(get_current_user)
 ):
     # Split the comma-separated string into a list
     control_families_list = [item.strip() for item in control_families.split(',')]
 
-    result = await agent.run_audit(
+    result = await orchestrator.run_audit(
         audit_type=audit_type,
         company_name=company_name,
         audit_scope=audit_scope,
@@ -46,11 +43,14 @@ async def run_audit(
 @router.get("/history", response_model=AuditHistoryResponse)
 async def get_audit_history(
     user_id: str,
-    agent: AuditAgent = Depends(get_audit_agent),
+    orchestrator: AuditOrchestrator = Depends(get_audit_orchestrator),
     current_user=Depends(get_current_user)
 ):
-    history = await agent.get_history(user_id)
-    return AuditHistoryResponse(history=history)
+    # This method would need to be implemented in the orchestrator
+    # For now, we leave it as a placeholder.
+    # history = await orchestrator.get_history(user_id)
+    # return AuditHistoryResponse(history=history)
+    raise HTTPException(status_code=501, detail="Not implemented")
 
 @router.get("/pdf/{file_id}", response_class=Response)
 async def serve_pdf(file_id: str, current_user=Depends(get_current_user)):

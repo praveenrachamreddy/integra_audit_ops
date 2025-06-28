@@ -1,24 +1,34 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, AsyncGenerator
 from PyPDF2 import PdfReader
+from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from tempfile import NamedTemporaryFile
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from bson import ObjectId
 
-def extract_pdf_content(file_path: str) -> str:
+async def extract_pdf_content(db: AsyncIOMotorDatabase, file_id: str) -> str:
     """
-    Extracts all text content from a PDF file.
+    Extracts all text content from a PDF file stored in GridFS.
     """
     try:
-        reader = PdfReader(file_path)
+        fs = AsyncIOMotorGridFSBucket(db)
+        grid_out = await fs.open_download_stream(ObjectId(file_id))
+        
+        # Read stream into an in-memory buffer for PyPDF2
+        pdf_bytes = await grid_out.read()
+        pdf_buffer = BytesIO(pdf_bytes)
+        
+        reader = PdfReader(pdf_buffer)
         text = ""
         for page in reader.pages:
             text += page.extract_text() or ""
         return text
     except Exception as e:
-        return f"Error extracting PDF content: {e}"
+        # Log the exception properly in a real app
+        return f"Error extracting PDF content for file_id {file_id}: {e}"
 
 def generate_pdf_report(
     sections: Optional[List[dict]],
@@ -74,26 +84,20 @@ def generate_pdf_report(
         c.save()
         return tmpfile.name 
 
-def get_gridfs(db: AsyncIOMotorDatabase):
-    return AsyncIOMotorGridFSBucket(db)
-
-async def save_pdf_to_db(db: AsyncIOMotorDatabase, file_path: str, filename: str, metadata: Optional[dict] = None) -> str:
+async def save_pdf_stream_to_db(db: AsyncIOMotorDatabase, file_stream: AsyncGenerator, filename: str, metadata: Optional[dict] = None) -> str:
     """
-    Save a PDF file to MongoDB GridFS. Returns the file id as a string.
+    Saves a file stream to MongoDB GridFS. Returns the file id as a string.
     """
-    fs = get_gridfs(db)
-    with open(file_path, "rb") as f:
-        file_id = await fs.upload_from_stream(filename, f, metadata=metadata)
+    fs = AsyncIOMotorGridFSBucket(db)
+    file_id = await fs.upload_from_stream(filename, file_stream, metadata=metadata)
     return str(file_id)
 
 async def get_pdf_from_db(db: AsyncIOMotorDatabase, file_id: str) -> bytes:
     """
     Retrieve a PDF file from MongoDB GridFS by file id. Returns the file bytes.
     """
-    fs = get_gridfs(db)
-    from bson import ObjectId
-    oid = ObjectId(file_id)
-    stream = await fs.open_download_stream(oid)
+    fs = AsyncIOMotorGridFSBucket(db)
+    stream = await fs.open_download_stream(ObjectId(file_id))
     data = await stream.read()
     await stream.close()
     return data 

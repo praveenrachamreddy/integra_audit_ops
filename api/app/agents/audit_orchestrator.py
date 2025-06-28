@@ -1,0 +1,88 @@
+import asyncio
+import os
+from typing import List, Dict, Any
+from tempfile import TemporaryDirectory
+from fastapi import UploadFile
+
+from app.services.adk import ADKClient
+from app.services.vertex_ai import VertexAIClient
+from app.services.pdf_tools import save_pdf_stream_to_db, generate_pdf_report
+from app.infrastructure.db import mongodb
+from app.agents.sub_agents.compliance_scanner import ComplianceScannerAgent
+from app.agents.sub_agents.remediation_suggestor import RemediationSuggestorAgent
+from app.agents.sub_agents.report_generator import ReportGeneratorAgent
+
+class AuditOrchestrator:
+    def __init__(self, vertex_ai: VertexAIClient, adk: ADKClient):
+        self.vertex_ai = vertex_ai
+        self.adk = adk
+        # Instantiate the sub-agents
+        self.scanner = ComplianceScannerAgent(vertex_ai, adk)
+        self.remediator = RemediationSuggestorAgent(vertex_ai, adk)
+        self.reporter = ReportGeneratorAgent()
+
+    async def _remediate_issue(self, issue: Dict[str, Any], user_id: str, session_id: str) -> Dict[str, Any]:
+        """Helper coroutine to get a recommendation for a single issue."""
+        recommendation = await self.remediator.get_recommendation(issue, user_id, session_id)
+        issue['recommendation'] = recommendation
+        return issue
+
+    async def run_audit(self, audit_type: str, company_name: str, audit_scope: str, control_families: list, documents: List[UploadFile], user_id: str, session_id: str):
+        # 1. Stream files to GridFS and get their unique IDs
+        upload_tasks = [save_pdf_stream_to_db(mongodb.db, doc.file, doc.filename, {"user_id": user_id, "type": "uploaded"}) for doc in documents]
+        doc_ids = await asyncio.gather(*upload_tasks)
+
+        # 2. Concurrently fan-out remediation tasks as issues are streamed from the scanner
+        remediation_tasks = []
+        async for issue in self.scanner.stream_issues(audit_type, company_name, audit_scope, control_families, doc_ids, user_id, session_id):
+            if "error" not in issue:
+                # Create a task for each issue and add it to the list
+                task = asyncio.create_task(self._remediate_issue(issue, user_id, session_id))
+                remediation_tasks.append(task)
+        
+        # 3. Aggregate results once all remediation tasks are complete
+        if not remediation_tasks:
+            # Handle case where no issues were found
+            enriched_issues = []
+        else:
+            enriched_issues = await asyncio.gather(*remediation_tasks)
+
+        # 4. Perform final sequential steps: scoring and report section generation
+        score = max(0, 100 - (len(enriched_issues) * 10))
+        
+        report_sections = []
+        for issue in enriched_issues:
+            report_sections.append({
+                "title": f"Issue: {issue.get('description', 'N/A')[:40]}...",
+                "content": f"Severity: {issue.get('severity', 'N/A')}\n\nRecommendation: {issue.get('recommendation', 'N/A')}",
+                "flagged": True
+            })
+        if not enriched_issues:
+            report_sections.append({
+                "title": "No Compliance Issues Found",
+                "content": "Based on the provided documents and control families, no compliance gaps were identified.",
+                "flagged": False
+            })
+
+        # 5. Generate and save the final PDF report
+        pdf_url = None
+        with TemporaryDirectory() as tmpdir:
+            pdf_path = self.reporter.create_pdf_report(score, enriched_issues, report_sections, output_dir=tmpdir)
+            with open(pdf_path, "rb") as f:
+                pdf_id = await save_pdf_stream_to_db(
+                    mongodb.db,
+                    f,
+                    f"audit_report_{user_id}.pdf",
+                    metadata={"user_id": user_id, "type": "generated"}
+                )
+                pdf_url = f"/api/v1/audit/pdf/{pdf_id}"
+        
+        return {
+            "score": score,
+            "issues": enriched_issues,
+            "report_sections": report_sections,
+            "pdf_url": pdf_url,
+        }
+
+    async def get_history(self, user_id: str):
+        return await self.adk.run_agent("audit_history", {"user_id": user_id}) 
