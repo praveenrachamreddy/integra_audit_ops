@@ -40,17 +40,20 @@ async def run_audit(
     )
     return result
 
-@router.get("/history", response_model=AuditHistoryResponse)
+@router.get("/history", response_model=list)
 async def get_audit_history(
-    user_id: str,
     orchestrator: AuditOrchestrator = Depends(get_audit_orchestrator),
     current_user=Depends(get_current_user)
 ):
-    # This method would need to be implemented in the orchestrator
-    # For now, we leave it as a placeholder.
-    # history = await orchestrator.get_history(user_id)
-    # return AuditHistoryResponse(history=history)
-    raise HTTPException(status_code=501, detail="Not implemented")
+    """
+    Retrieves the audit history for the currently authenticated user.
+    """
+    user_id = current_user.id
+    if not user_id:
+        raise HTTPException(status_code=403, detail="User ID not found in token.")
+
+    history = await orchestrator.get_history(user_id)
+    return history
 
 @router.get("/pdf/{file_id}", response_class=Response)
 async def serve_pdf(file_id: str, current_user=Depends(get_current_user)):
@@ -62,16 +65,29 @@ async def serve_pdf(file_id: str, current_user=Depends(get_current_user)):
             oid = ObjectId(file_id)
         except InvalidId:
             raise HTTPException(status_code=404, detail="Invalid file id")
+        
         file_info = await fs.find({"_id": oid}).to_list(1)
         if not file_info:
             raise HTTPException(status_code=404, detail="PDF not found")
+        
         file_doc = file_info[0]
-        owner_id = file_doc.metadata.get("user_id") if file_doc.metadata else None
-        if (owner_id != current_user.id) and (current_user.role != "admin"):
+        metadata = file_doc.get("metadata")
+        owner_id = metadata.get("user_id") if metadata else None
+        
+        user_id = current_user.id
+        user_role = current_user.role
+
+        if (owner_id != str(user_id)) and (user_role != "admin"):
             raise HTTPException(status_code=403, detail="Not authorized to access this PDF")
+        
         pdf_bytes = await get_pdf_from_db(mongodb.db, file_id)
-        return Response(content=pdf_bytes, media_type="application/pdf")
+
+        # Add a Content-Disposition header to encourage browsers to download the file.
+        headers = {
+            'Content-Disposition': f'attachment; filename="audit_report_{file_id}.pdf"'
+        }
+        return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"PDF not found: {e}") 
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}") 

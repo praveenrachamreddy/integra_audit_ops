@@ -17,7 +17,7 @@ async def get_explanation(
     """
     from app.main import adk, vertex_ai # Lazy import to avoid circular dependency
     
-    user_id = user["sub"]
+    user_id = user.id
     session_id = x_session_id or "default_session"
     
     orchestrator = ExplanationOrchestrator(vertex_ai, adk)

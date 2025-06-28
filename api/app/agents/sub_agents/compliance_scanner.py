@@ -14,17 +14,16 @@ class ComplianceScannerAgent:
         self.vertex_ai = vertex_ai
         self.adk = adk
         
-        # Define a simple wrapper function that the ADK can easily parse.
+        # Define a simple ASYNC wrapper function that the ADK can easily parse.
         # This function takes a string, converts it to an ObjectId, and then calls the real logic.
         # This hides the complex `ObjectId` type from the ADK's automatic tool parser.
-        def get_document_content(file_id: str) -> str:
+        async def get_document_content(file_id: str) -> str:
             """
             Retrieves the text content of a document given its file ID.
             Use this tool to read the documents provided to you to find compliance issues.
             """
-            # Note: This is a synchronous wrapper for an async function.
-            # The ADK handles the async invocation.
-            return extract_pdf_content(mongodb.db, ObjectId(file_id))
+            # This wrapper must be async and must await the underlying async function.
+            return await extract_pdf_content(mongodb.db, ObjectId(file_id))
 
         self.tools = [get_document_content]
         self.prompt_template = self._load_prompt_template()

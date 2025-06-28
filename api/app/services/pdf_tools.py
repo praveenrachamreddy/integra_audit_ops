@@ -92,6 +92,15 @@ async def save_pdf_stream_to_db(db: AsyncIOMotorDatabase, file_stream: AsyncGene
     file_id = await fs.upload_from_stream(filename, file_stream, metadata=metadata)
     return str(file_id)
 
+async def save_pdf_file_to_db(db: AsyncIOMotorDatabase, file_path: str, filename: str, metadata: Optional[dict] = None) -> str:
+    """
+    Saves a local file to MongoDB GridFS. Returns the file id as a string.
+    """
+    fs = AsyncIOMotorGridFSBucket(db)
+    with open(file_path, "rb") as f:
+        file_id = await fs.upload_from_stream(filename, f, metadata=metadata)
+    return str(file_id)
+
 async def get_pdf_from_db(db: AsyncIOMotorDatabase, file_id: str) -> bytes:
     """
     Retrieve a PDF file from MongoDB GridFS by file id. Returns the file bytes.
@@ -99,5 +108,5 @@ async def get_pdf_from_db(db: AsyncIOMotorDatabase, file_id: str) -> bytes:
     fs = AsyncIOMotorGridFSBucket(db)
     stream = await fs.open_download_stream(ObjectId(file_id))
     data = await stream.read()
-    await stream.close()
+    stream.close()
     return data 
