@@ -22,31 +22,26 @@ def get_audit_agent():
 @router.post("/run", response_model=AuditRunResponse)
 async def run_audit(
     audit_type: str = Form(...),
-    audit_details: str = Form(...),  # JSON string, will parse below
-    mongo_uri: str = Form(None),
-    documents: list[UploadFile] = File([]),
+    company_name: str = Form(...),
+    audit_scope: str = Form(...),
+    control_families: str = Form(..., description="A comma-separated list of control families to evaluate."),
+    documents: list[UploadFile] = File(...),
     agent: AuditAgent = Depends(get_audit_agent),
     current_user=Depends(get_current_user)
 ):
-    import json
-    audit_details_dict = json.loads(audit_details)
-    # Pass all data to the agent
+    # Split the comma-separated string into a list
+    control_families_list = [item.strip() for item in control_families.split(',')]
+
     result = await agent.run_audit(
-        audit_details=audit_details_dict,
         audit_type=audit_type,
-        mongo_uri=mongo_uri,
+        company_name=company_name,
+        audit_scope=audit_scope,
+        control_families=control_families_list,
         documents=documents,
         user_id=str(current_user.id),
         session_id=str(current_user.id)
     )
-    return AuditRunResponse(
-        adk_result=result.get("adk_result"),
-        llm_result=result.get("llm_result"),
-        score=result.get("score"),
-        issues=result.get("issues"),
-        report_sections=result.get("report_sections"),
-        pdf_url=result.get("pdf_url")
-    )
+    return result
 
 @router.get("/history", response_model=AuditHistoryResponse)
 async def get_audit_history(

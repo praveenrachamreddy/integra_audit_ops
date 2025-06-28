@@ -12,14 +12,19 @@ class AuditReportSection(BaseModel):
     flagged: bool
 
 class AuditRunRequest(BaseModel):
-    audit_details: Dict[str, Any]
-    audit_type: Optional[str] = None  # New: type of audit
-    mongo_uri: Optional[str] = None   # New: optional MongoDB URI
-    # File uploads will be handled at the endpoint level
+    """
+    Defines the structured data for an audit request.
+    Note: In the endpoint, these are sent as form fields, not a single JSON body.
+    """
+    audit_type: str
+    company_name: str
+    audit_scope: str
+    control_families: List[str]
 
 class AuditRunResponse(BaseModel):
-    adk_result: Optional[dict] = None
-    llm_result: Optional[dict] = None
+    """
+    The final, clean response containing only the essential, structured audit results.
+    """
     score: Optional[int] = None
     issues: Optional[List[AuditIssue]] = None
     report_sections: Optional[List[AuditReportSection]] = None

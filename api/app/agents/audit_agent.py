@@ -28,7 +28,7 @@ class AuditAgent:
             # Fallback or error handling
             return "Error: Prompt template not found."
 
-    async def run_audit(self, audit_details: dict, audit_type: str = None, mongo_uri: str = None, documents=None, user_id: str = None, session_id: str = None):
+    async def run_audit(self, audit_type: str, company_name: str, audit_scope: str, control_families: list, documents: list, user_id: str, session_id: str):
         with TemporaryDirectory() as tmpdir:
             doc_paths = []
             uploaded_pdf_ids = []
@@ -46,9 +46,9 @@ class AuditAgent:
             prompt_template = self._load_prompt_template()
             prompt = prompt_template.format(
                 audit_type=audit_type,
-                company_name=audit_details.get('company_name', 'N/A'),
-                audit_scope=audit_details.get('audit_scope', 'N/A'),
-                control_families=audit_details.get('control_families', []),
+                company_name=company_name,
+                audit_scope=audit_scope,
+                control_families=control_families,
                 doc_paths=doc_paths
             )
 
@@ -90,14 +90,10 @@ class AuditAgent:
                 pdf_url = f"/api/v1/audit/pdf/{generated_pdf_id}"
 
             return {
-                "adk_result": adk_result,
-                "llm_result": final_json_result,
                 "score": score,
                 "issues": issues,
                 "report_sections": report_sections,
                 "pdf_url": pdf_url,
-                "uploaded_pdf_ids": uploaded_pdf_ids,
-                "generated_pdf_id": str(generated_pdf_id) if generated_pdf_id else None
             }
 
     async def get_history(self, user_id: str):
