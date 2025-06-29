@@ -162,4 +162,71 @@ If the database is unreachable:
 ---
 
 ## Contributing
-- Fork, branch, PR. Follow clean code and modularity guidelines. 
+- Fork, branch, PR. Follow clean code and modularity guidelines.
+
+## Architecture Diagram
+
+Below is the architecture for the RegOps AI Suite. You can copy this Mermaid code into any Mermaid-compatible markdown viewer or the [Mermaid Live Editor](https://mermaid.live) to visualize and download the diagram.
+
+```mermaid
+flowchart TD
+  %% Users
+  subgraph Users
+    U1["Compliance Officer"]
+    U2["Business User"]
+  end
+
+  %% Frontend
+  FE["Frontend (Next.js)\n[Vercel/GCP Hosting]"]
+
+  %% API Backend
+  API["Backend API (FastAPI)\n[GCP VM / Cloud Run]"]
+
+  %% Database
+  DB["MongoDB\n[Atlas/Managed]"]
+
+  %% Email
+  EMAIL["Email Service\n(Mailtrap/SMTP)"]
+
+  %% AI Agents
+  AGENTS["AI Agents\n(Python modules)"]
+
+  %% Google Cloud AI
+  GCP["Google Cloud AI APIs\n(Vertex AI, DocAI, etc.)"]
+
+  %% Monitoring
+  MON["Monitoring & Logging\n(GCP Ops, Sentry, etc.)"]
+
+  %% CDN
+  CDN["CDN/Static Assets\n(Vercel/GCP Storage)"]
+
+  %% Secrets
+  SECRETS["Secrets & Config\n(.env, GCP creds)"]
+
+  %% Connections
+  U1 -->|"HTTPS"| FE
+  U2 -->|"HTTPS"| FE
+  FE -->|"REST API (HTTPS)"| API
+  FE -->|"Static Assets"| CDN
+  API -->|"DB Ops"| DB
+  API -->|"Email"| EMAIL
+  API -->|"AI Tasks"| AGENTS
+  AGENTS -->|"Cloud AI API"| GCP
+  API -->|"Monitoring"| MON
+  API <--> SECRETS
+  AGENTS <--> SECRETS
+  API -->|"Health Check"| MON
+
+  classDef cloud fill:#e3f2fd,stroke:#2196f3,stroke-width:2px;
+  class GCP,CDN,MON cloud;
+```
+
+**How it works:**
+- Users interact with the Next.js frontend, which communicates with the FastAPI backend via secure REST APIs.
+- The backend handles business logic, authentication, and orchestrates AI agents for compliance tasks.
+- MongoDB stores all persistent data.
+- Email notifications are sent via Mailtrap or SMTP.
+- AI agents interact with Google Cloud AI APIs for advanced document and language processing.
+- All secrets and configuration are managed securely.
+- Monitoring and health checks are integrated for observability.
+- Static assets are served via CDN for fast, global access. 

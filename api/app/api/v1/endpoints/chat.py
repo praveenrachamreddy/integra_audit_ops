@@ -1,27 +1,34 @@
-from fastapi import APIRouter, Depends
-from app.domain.models.explanation_agent import (
-    ExplanationRequest, ExplanationResponse
-)
-from app.agents.explanation_agent import ExplanationAgent
-from app.services.vertex_ai import VertexAIClient
-from app.services.adk import ADKClient
+from fastapi import APIRouter, Depends, HTTPException, Body, Header
+from typing import Annotated, Dict, Any, Optional
 from app.api.v1.endpoints.auth import get_current_user
+from app.agents.permit_orchestrator import PermitOrchestrator
+from app.domain.models.permit_orchestrator import PermitAnalysisRequest, PermitAnalysisResponse
 
 router = APIRouter()
 
-def get_explanation_agent():
-    vertex_ai = VertexAIClient()
-    adk = ADKClient()
-    return ExplanationAgent(vertex_ai, adk)
-
-@router.post("/message", response_model=ExplanationResponse)
-async def explain_message(
-    request: ExplanationRequest,
-    agent: ExplanationAgent = Depends(get_explanation_agent),
-    current_user=Depends(get_current_user)
+@router.post("/analyze_permit", response_model=PermitAnalysisResponse)
+async def analyze_permit(
+    request: PermitAnalysisRequest,
+    user: dict = Depends(get_current_user),
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID")
 ):
-    result = await agent.explain(request.query)
-    return ExplanationResponse(
-        adk_result=result["adk_result"],
-        llm_result=result["llm_result"]
-    ) 
+    """
+    Analyzes a project description and location to determine permit requirements.
+    """
+    from app.main import adk, vertex_ai # Lazy import to avoid circular dependency
+    
+    user_id = user.id
+    session_id = x_session_id or "default_session"
+    
+    orchestrator = PermitOrchestrator(vertex_ai, adk)
+    
+    try:
+        result = await orchestrator.analyze_permit_request(
+            project_description=request.project_description,
+            location=request.location,
+            user_id=user_id,
+            session_id=session_id
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 

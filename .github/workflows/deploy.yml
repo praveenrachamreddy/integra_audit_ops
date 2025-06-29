@@ -29,17 +29,27 @@ jobs:
         run: |
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./api/ ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:~/regops/api/
 
-      - name: Write GCP credentials file on VM
+      - name: Write GCP credentials file on VM (Base64-safe)
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "echo '${{ secrets.GCP_CREDENTIALS_JSON }}' > ~/regops/api/gcp-creds.json"
+          echo "${{ secrets.GCP_CREDENTIALS_JSON }}" | \
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} \
+          "base64 -d > ~/regops/api/gcp-creds.json"
+        
+
+      - name: Check for valid gcp-creds.json on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
+          python3 -c 'import json; json.load(open(\"/home/${{ secrets.GCP_SSH_USER }}/regops/api/gcp-creds.json\"))' \
+          && echo '✅ gcp-creds.json is valid JSON.'
+          "
 
       - name: Deploy on VM
         run: |
             ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
               cd ~/regops/api && \
               ls -la && \
-              docker compose down && \
-              docker compose pull || true && \
-              docker compose build && \
-              docker compose up -d --remove-orphans
+              docker compose down regops-api || true && \
+              docker compose pull regops-api || true && \
+              docker compose build regops-api && \
+              docker compose up -d --remove-orphans regops-api
             "

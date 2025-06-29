@@ -30,14 +30,21 @@ class ADKClient:
         )
         return session
 
-    async def run_agent(self, agent_name: str, data: dict, user_id: str, session_id: str) -> dict:
+    async def run_agent(self, agent_name: str, data: dict, user_id: str, session_id: str, tools: list = None, instruction: str = None) -> dict:
         # Ensure session asynchronously before running agent
         await self.ensure_session(user_id, session_id)
+
+        # Use provided tools or default to google_search
+        agent_tools = tools if tools is not None else [google_search]
+        
+        # Use provided instruction or a default one
+        agent_instruction = instruction if instruction is not None else "You are a helpful assistant."
+
         agent = LlmAgent(
             name=agent_name,
             model=self.model,
-            instruction="You are a helpful assistant.",
-            tools=[google_search],
+            instruction=agent_instruction,
+            tools=agent_tools,
         )
         prompt = getattr(data, "prompt", None)
         if prompt is None and isinstance(data, dict):

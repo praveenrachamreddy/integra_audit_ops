@@ -1,84 +1,93 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Response, HTTPException
-from app.domain.models.audit_agent import (
-    AuditRunRequest, AuditRunResponse,
-    AuditHistoryRequest, AuditHistoryResponse
-)
-from app.agents.audit_agent import AuditAgent
+from app.domain.models.audit_orchestrator import AuditRunResponse, AuditHistoryResponse
+from app.agents.audit_orchestrator import AuditOrchestrator
 from app.services.vertex_ai import VertexAIClient
 from app.services.adk import ADKClient
 from app.api.v1.endpoints.auth import get_current_user
 from app.services.pdf_tools import get_pdf_from_db
 from app.infrastructure.db import mongodb
 from bson import ObjectId
-import gridfs
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 
 router = APIRouter()
 
-def get_audit_agent():
+def get_audit_orchestrator():
     vertex_ai = VertexAIClient()
     adk = ADKClient()
-    return AuditAgent(vertex_ai, adk)
+    return AuditOrchestrator(vertex_ai, adk)
 
 @router.post("/run", response_model=AuditRunResponse)
 async def run_audit(
     audit_type: str = Form(...),
-    audit_details: str = Form(...),  # JSON string, will parse below
-    mongo_uri: str = Form(None),
-    documents: list[UploadFile] = File([]),
-    system_logs: list[UploadFile] = File([]),
-    agent: AuditAgent = Depends(get_audit_agent),
+    company_name: str = Form(...),
+    audit_scope: str = Form(...),
+    control_families: str = Form(..., description="A comma-separated list of control families to evaluate."),
+    documents: list[UploadFile] = File(...),
+    orchestrator: AuditOrchestrator = Depends(get_audit_orchestrator),
     current_user=Depends(get_current_user)
 ):
-    import json
-    audit_details_dict = json.loads(audit_details)
-    # Pass all data to the agent
-    result = await agent.run_audit(
-        audit_details=audit_details_dict,
+    # Split the comma-separated string into a list
+    control_families_list = [item.strip() for item in control_families.split(',')]
+
+    result = await orchestrator.run_audit(
         audit_type=audit_type,
-        mongo_uri=mongo_uri,
+        company_name=company_name,
+        audit_scope=audit_scope,
+        control_families=control_families_list,
         documents=documents,
-        system_logs=system_logs,
         user_id=str(current_user.id),
         session_id=str(current_user.id)
     )
-    return AuditRunResponse(
-        adk_result=result.get("adk_result"),
-        llm_result=result.get("llm_result"),
-        score=result.get("score"),
-        issues=result.get("issues"),
-        report_sections=result.get("report_sections"),
-        pdf_url=result.get("pdf_url")
-    )
+    return result
 
-@router.get("/history", response_model=AuditHistoryResponse)
+@router.get("/history", response_model=list)
 async def get_audit_history(
-    user_id: str,
-    agent: AuditAgent = Depends(get_audit_agent),
+    orchestrator: AuditOrchestrator = Depends(get_audit_orchestrator),
     current_user=Depends(get_current_user)
 ):
-    history = await agent.get_history(user_id)
-    return AuditHistoryResponse(history=history)
+    """
+    Retrieves the audit history for the currently authenticated user.
+    """
+    user_id = current_user.id
+    if not user_id:
+        raise HTTPException(status_code=403, detail="User ID not found in token.")
+
+    history = await orchestrator.get_history(user_id)
+    return history
 
 @router.get("/pdf/{file_id}", response_class=Response)
 async def serve_pdf(file_id: str, current_user=Depends(get_current_user)):
     try:
         # Check ownership or admin
-        fs = gridfs.AsyncIOMotorGridFSBucket(mongodb.db)
+        fs = AsyncIOMotorGridFSBucket(mongodb.db)
         from bson.errors import InvalidId
         try:
             oid = ObjectId(file_id)
         except InvalidId:
             raise HTTPException(status_code=404, detail="Invalid file id")
+        
         file_info = await fs.find({"_id": oid}).to_list(1)
         if not file_info:
             raise HTTPException(status_code=404, detail="PDF not found")
+        
         file_doc = file_info[0]
-        owner_id = file_doc.metadata.get("user_id") if file_doc.metadata else None
-        if (owner_id != current_user.id) and (current_user.role != "admin"):
+        metadata = file_doc.get("metadata")
+        owner_id = metadata.get("user_id") if metadata else None
+        
+        user_id = current_user.id
+        user_role = current_user.role
+
+        if (owner_id != str(user_id)) and (user_role != "admin"):
             raise HTTPException(status_code=403, detail="Not authorized to access this PDF")
+        
         pdf_bytes = await get_pdf_from_db(mongodb.db, file_id)
-        return Response(content=pdf_bytes, media_type="application/pdf")
+
+        # Add a Content-Disposition header to encourage browsers to download the file.
+        headers = {
+            'Content-Disposition': f'attachment; filename="audit_report_{file_id}.pdf"'
+        }
+        return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"PDF not found: {e}") 
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}") 

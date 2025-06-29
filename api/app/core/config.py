@@ -3,19 +3,20 @@ import logging
 from typing import List
 import json
 from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 from app.infrastructure.logger import Logger
 
 logger = Logger(__name__)
 load_dotenv()
 
-class Settings:
+class Settings(BaseSettings):
     # Environment
     ENV: str = os.getenv("ENV", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     PORT: int = int(os.getenv("PORT", 9090))
     
     # Project Info
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "RegOps AI Suite")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "RegOps API")
     VERSION: str = os.getenv("VERSION", "1.0.0")
     API_V1_STR: str = os.getenv("API_V1_STR", "/api/v1")
     
@@ -42,9 +43,9 @@ class Settings:
     
     # CORS
     try:
-        BACKEND_CORS_ORIGINS: List[str] = json.loads(os.getenv("BACKEND_CORS_ORIGINS", '["http://localhost:3000"]'))
+        BACKEND_CORS_ORIGINS: List[str] = json.loads(os.getenv("BACKEND_CORS_ORIGINS", '["http://localhost:3000", "https://regopsai.buzz"]'))
     except Exception:
-        BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+        BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://regopsai.buzz"]
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
@@ -65,6 +66,20 @@ class Settings:
 
     # ADK
     ADK_MODEL_NAME: str = os.getenv("ADK_MODEL_NAME", "gemini-2.0-flash")
+
+    # For streaming responses
+    JINA_API_KEY: str = os.getenv("JINA_API_KEY", "")
+
+    # Tavus
+    TAVUS_API_KEY: str = os.getenv("TAVUS_API_KEY", "")
+    TAVUS_REPLICA_ID: str = os.getenv("TAVUS_REPLICA_ID", "")
+
+    # ElevenLabs
+    ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
+    ELEVENLABS_AGENT_ID: str = os.getenv("ELEVENLABS_AGENT_ID", "")
+
+    class Config:
+        case_sensitive = True
 
 settings = Settings()
 
