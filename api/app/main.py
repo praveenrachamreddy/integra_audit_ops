@@ -8,7 +8,6 @@ from app.api.v1.endpoints import (
     auth, 
     health, 
     audit, 
-    chat, 
     explain, 
     # users, 
     media
@@ -62,7 +61,6 @@ app.include_router(audit.router, prefix=f"{settings.API_V1_STR}/audit", tags=["A
 app.include_router(explain.router, prefix=f"{settings.API_V1_STR}/explain", tags=["Explain"])
 # app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
 app.include_router(media.router, prefix=f"{settings.API_V1_STR}/media", tags=["Media"])
-app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/permit", tags=["Permit"])
 
 # Custom OpenAPI schema with JWT Bearer
 

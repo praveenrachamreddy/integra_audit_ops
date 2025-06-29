@@ -175,7 +175,7 @@ async def refresh_token(
         )
 
 @router.get("/me", summary="Get current user info", description="Returns the current user's information. Requires JWT Bearer token.",
-            response_model=User, tags=["auth"],
+            response_model=User,
             responses={401: {"description": "Unauthorized"}})
 async def get_me(current_user: User = Depends(get_current_user)) -> User:
     """Get current user info (JWT protected)."""

@@ -1,18 +1,180 @@
 # RegOps AI Suite Backend
 
 ## Overview
-RegOps is an AI-powered compliance automation platform for streamlining regulatory operations. It features modular backend services (FastAPI, Python), a modern frontend (Next.js), and robust integrations for authentication, permit management, audits, and notifications.
+The backend for the RegOps AI Suite is an intelligent, multi-agent system built on FastAPI. It leverages a clean architecture to provide robust, scalable, and maintainable services for AI-powered compliance automation. The system includes modular orchestrators for complex tasks like permit analysis, compliance audits, and generating regulatory explanations.
 
 ---
 
 ## Key Features
-- **Authentication & Authorization**: JWT-based, role-based access, email verification, password setup
-- **Health Endpoint**: `/api/v1/health` for app and database status
-- **Singleton MongoDB Client**: Managed in `infrastructure/db.py` for efficient connection reuse
-- **Mailtrap API Integration**: For all transactional emails (no SMTP config)
-- **Audit Endpoint**: Run compliance audits and retrieve results via `/api/v1/audit`
-- **Clean Code Architecture**: Separation of concerns, modular services, infrastructure, and domain layers
-- **OpenAPI/Swagger**: JWT-protected endpoints show lock icon, all endpoints documented
+- **Authentication & Authorization**: Secure JWT-based auth with email verification.
+- **Multi-Agent Orchestrators**: Dedicated orchestrators for `Permit`, `Audit`, and `Explanation` tasks, managing chains of specialized AI agents.
+- **Conversational Media Endpoints**:
+  - **Tavus Integration**: Generates real-time, context-aware conversational video sessions.
+  - **ElevenLabs Integration**: Provides configuration for real-time, conversational audio sessions.
+- **Centralized Routing**: All API routes are managed directly in `main.py` for clarity.
+- **Singleton MongoDB Client**: Efficiently managed in `infrastructure/db.py`.
+- **Comprehensive OpenAPI Docs**: Automatically generated and secured via JWT.
+
+---
+
+## Architecture Diagram
+
+The diagram below illustrates the multi-agent architecture of the RegOps backend, including the flow of requests from the user through the API endpoints to the various orchestrators and external services.
+
+```mermaid
+graph TD
+    subgraph "User & Client"
+        User(["<br/>User<br/>(Browser)"])
+    end
+
+    subgraph "RegOps Backend (FastAPI)"
+        A[/"CORS Middleware"/] --> B{API Routers}
+        
+        B -->|/audit| Audit["Audit Orchestrator"]
+        B -->|/permit| Permit["Permit Orchestrator"]
+        B -->|/explain| Explain["Explanation Orchestrator"]
+        B -->|/media| Media["Media Endpoints"]
+
+        Media --> VideoOrchestrator["Video Orchestrator"]
+        Media --> AudioOrchestrator["Audio Orchestrator"]
+        
+        VideoOrchestrator --> TavusClient["Tavus Service"]
+        AudioOrchestrator --> C["Config Generation"]
+
+        subgraph "Audit Agents"
+            Audit --> AS[Compliance Scanner] & AR[Remediation Suggestor]
+        end
+        
+        subgraph "Permit Agents"
+            Permit --> PI[Intent Extractor] & PP[Policy Expert] & PL[Location Agent] & PV[Pre-Submission Validator]
+        end
+        
+        subgraph "Explanation Agents"
+            Explain --> EQ[Query Deconstructor] & ER[Regulation Finder] & ES[Synthesizer]
+        end
+
+        AS & AR & PI & PP & PL & PV & EQ & ER & ES --> ADK[ADK Service]
+        ADK --> VertexAI[("Google Vertex AI")]
+        
+        TavusClient --> TavusAPI[("Tavus API")]
+        C -.-> ClientToldToUse[("ElevenLabs API")]
+
+        Audit & Permit & Explain --> DB[(MongoDB)]
+    end
+
+    User -- "HTTPS Request" --> A
+    subgraph "External Services"
+        VertexAI
+        TavusAPI
+        ClientToldToUse
+        DB
+    end
+
+    style User fill:#cde4ff,stroke:#6699ff
+    style VertexAI fill:#d4edda,stroke:#155724
+    style TavusAPI fill:#d4edda,stroke:#155724
+    style ClientToldToUse fill:#fff3cd,stroke:#856404
+    style DB fill:#f8d7da,stroke:#721c24
+    linkStyle 15 stroke-width:2px,fill:none,stroke:green;
+    linkStyle 16 stroke-width:2px,fill:none,stroke:green;
+    linkStyle 17 stroke-dasharray: 5 5, stroke-width:2px,fill:none,stroke:orange;
+    linkStyle 18 stroke-width:2px,fill:none,stroke:maroon;
+```
+
+---
+
+## Setup
+
+1.  **Clone the repo** and navigate to the `regops/api` directory.
+2.  **Create and activate a virtual environment**:
+    ```bash
+    python -m venv env
+    source env/bin/activate  # Or `env\Scripts\activate` on Windows
+    ```
+3.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Create a `.env` file** in the `regops/api` directory. Populate it with your credentials.
+    ```env
+    # General
+    ENV=development
+    DEBUG=True
+    PORT=8000
+    SECRET_KEY=your-super-secret-key
+    BACKEND_CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+
+    # Database
+    MONGODB_URL=mongodb://localhost:27017
+    DATABASE_NAME=regops
+
+    # Google Cloud
+    GCP_PROJECT_ID=your-gcp-project-id
+    GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/gcp-credentials.json
+
+    # Media Services
+    TAVUS_API_KEY=your_tavus_api_key
+    TAVUS_REPLICA_ID=your_tavus_replica_id
+    ELEVENLABS_API_KEY=your_elevenlabs_api_key
+    ELEVENLABS_AGENT_ID=your_elevenlabs_agent_id
+    ```
+5.  **Run the application**:
+    ```bash
+    uvicorn app.main:app --reload
+    ```
+
+---
+
+## API Usage
+
+Access the interactive API documentation at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+### Media Endpoints
+
+These endpoints provide configurations for starting real-time conversational media sessions.
+
+#### Start Video Conversation
+
+-   `POST /api/v1/media/video/start_conversation`
+-   **Description**: Takes permit details and returns a unique Tavus URL for a real-time video call with a context-aware AI avatar.
+-   **Request Body**:
+    ```json
+    {
+      "permit_details": {
+        "applicant_name": "EcoBuild Corp",
+        "project_type": "New Commercial Building",
+        "status": "Pending Review"
+      }
+    }
+    ```
+-   **Success Response (200)**:
+    ```json
+    {
+      "conversation_url": "https://tavus.daily.co/c123456..."
+    }
+    ```
+
+#### Get Audio Conversation Config
+
+-   `POST /api/v1/media/audio/start_conversation`
+-   **Description**: Takes permit details and returns the necessary configuration for a client to establish a WebSocket connection with a context-aware ElevenLabs audio agent.
+-   **Request Body**:
+    ```json
+    {
+      "permit_details": {
+        "applicant_name": "EcoBuild Corp",
+        "project_type": "New Commercial Building",
+        "status": "Pending Review"
+      }
+    }
+    ```
+-   **Success Response (200)**:
+    ```json
+    {
+      "agent_id": "your_elevenlabs_agent_id",
+      "prompt": "You are an expert AI assistant for RegOps... Here is the permit information: ..."
+    }
+    ```
 
 ---
 
@@ -44,85 +206,6 @@ regops/api/
 ├── requirements.txt
 └── README.md
 ```
-
----
-
-## Setup
-
-1. **Clone the repo and enter the directory**
-2. **Create a virtual environment and activate it**
-   ```bash
-   python -m venv env
-   source env/bin/activate  # or env\Scripts\activate on Windows
-   ```
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Create a `.env` file in `regops/api/`**
-   Example:
-   ```env
-   ENV=development
-   DEBUG=True
-   PORT=8000
-   PROJECT_NAME=RegOps AI Suite
-   VERSION=1.0.0
-   SECRET_KEY=your-secret-key
-   ACCESS_TOKEN_EXPIRE_MINUTES=30
-   REFRESH_TOKEN_EXPIRE_DAYS=7
-   MONGODB_URL=mongodb://localhost:27017
-   DATABASE_NAME=regops
-   REDIS_URL=redis://localhost:6379
-   MAILTRAP_API_TOKEN=your-mailtrap-api-token
-   MAILTRAP_SENDER_EMAIL=your-sender@email.com
-   MAILTRAP_SENDER_NAME=RegOps AI Suite
-   MAILTRAP_INBOX_ID=your-inbox-id  # optional
-   BACKEND_CORS_ORIGINS=["http://localhost:3000"]
-   LOG_LEVEL=INFO
-   ```
-5. **Start MongoDB** (locally or via Docker)
-6. **Run the app**
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   # or use your configured port
-   uvicorn app.main:app --reload --port $PORT
-   ```
-
----
-
-## Usage
-- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
-- **Auth Endpoints**: `/api/v1/auth/*` (register, verify-email, set-password, login, refresh, me)
-- **Audit Endpoint**: `/api/v1/audit` (run and retrieve compliance audits)
-
-### Audit Endpoint
-
-- **POST /api/v1/audit**
-  - **Description:** Run a compliance audit for a given permit or entity.
-  - **Auth:** Requires JWT access token (Bearer).
-  - **Request Body Example:**
-    ```json
-    {
-      "permit_id": "1234567890abcdef",
-      "parameters": {
-        "region": "EU",
-        "type": "environmental"
-      }
-    }
-    ```
-  - **Response Example:**
-    ```json
-    {
-      "audit_id": "audit_abc123",
-      "status": "completed",
-      "result": {
-        "compliant": true,
-        "issues": []
-      }
-    }
-    ```
-  - **Notes:** Audits may run asynchronously; check status with `GET /api/v1/audit/{audit_id}`.
 
 ---
 
