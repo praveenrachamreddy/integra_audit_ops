@@ -6,7 +6,7 @@ class TavusClient:
         self.api_key = settings.TAVUS_API_KEY
         self.base_url = "https://tavusapi.com/v2"
 
-    async def create_conversation(self, context: str, replica_id: str) -> str:
+    async def create_conversation(self, context: str, replica_id: str, greeting: str = None) -> str:
         url = f"{self.base_url}/conversations"
         headers = {
             "x-api-key": self.api_key,
@@ -16,6 +16,9 @@ class TavusClient:
             "replica_id": replica_id,
             "conversational_context": context,
         }
+
+        if greeting:
+            payload["custom_greeting"] = greeting
         
         async with httpx.AsyncClient() as client:
             try:

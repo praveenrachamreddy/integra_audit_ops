@@ -21,10 +21,12 @@ class VideoOrchestrator:
 
     async def start_conversation(self, request: StartVideoConversationRequest) -> VideoConversationResponse:
         context = self._create_context_from_details(request.permit_details)
+        greeting = "Hello! I am your RegOps AI assistant. I have reviewed your permit details and am ready to discuss them with you. What would you like to know?"
         
         conversation_url = await self.tavus_client.create_conversation(
             context=context,
-            replica_id=self.replica_id
+            replica_id=self.replica_id,
+            greeting=greeting
         )
 
         if not conversation_url:

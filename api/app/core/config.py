@@ -5,7 +5,6 @@ import json
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from app.infrastructure.logger import Logger
-from pydantic import validator, field_validator
 
 logger = Logger(__name__)
 load_dotenv()
@@ -43,18 +42,7 @@ class Settings(BaseSettings):
     MAILTRAP_INBOX_ID: str = os.getenv("MAILTRAP_INBOX_ID", "")  # Optional
     
     # CORS
-    BACKEND_CORS_ORIGINS: Any = []
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode='before')
-    def assemble_cors_origins(cls, v: Any) -> List[str]:
-        if isinstance(v, str):
-            # Handles comma-separated string from env var
-            return [i.strip() for i in v.split(",") if i.strip()]
-        if isinstance(v, list):
-            # Handles default value or if it's somehow already a list
-            return v
-        # Default to empty list if it's something else unexpected
-        return []
+    BACKEND_CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
