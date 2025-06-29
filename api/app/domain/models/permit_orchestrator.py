@@ -19,7 +19,7 @@ class PermitSubmissionRequest(BaseModel):
     permit_data: Dict[str, Any]
 
 class PermitSubmissionResponse(BaseModel):
-    submission: dict
+    submission: dict 
 
 # --- Request Models ---
 
