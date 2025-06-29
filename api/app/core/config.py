@@ -5,7 +5,7 @@ import json
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from app.infrastructure.logger import Logger
-from pydantic import validator
+from pydantic import validator, field_validator
 
 logger = Logger(__name__)
 load_dotenv()
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = []
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode='before')
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
