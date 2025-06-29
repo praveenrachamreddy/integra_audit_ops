@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Union
+from typing import List, Union, Any
 import json
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
@@ -43,13 +43,18 @@ class Settings(BaseSettings):
     MAILTRAP_INBOX_ID: str = os.getenv("MAILTRAP_INBOX_ID", "")  # Optional
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = []
+    BACKEND_CORS_ORIGINS: Any = []
 
     @field_validator("BACKEND_CORS_ORIGINS", mode='before')
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        return v
+    def assemble_cors_origins(cls, v: Any) -> List[str]:
+        if isinstance(v, str):
+            # Handles comma-separated string from env var
+            return [i.strip() for i in v.split(",") if i.strip()]
+        if isinstance(v, list):
+            # Handles default value or if it's somehow already a list
+            return v
+        # Default to empty list if it's something else unexpected
+        return []
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
