@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/lib/providers/auth-provider';
+import { FloatingBoltIcon } from '@/components/ui/floating-bolt-icon';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -69,6 +70,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <FloatingBoltIcon />
             <Toaster 
               position="top-right" 
               expand={false}

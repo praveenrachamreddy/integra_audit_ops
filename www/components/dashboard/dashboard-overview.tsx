@@ -7,19 +7,12 @@ import {
   Shield, 
   FileText, 
   Clock,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Plus,
   ArrowRight,
-  BarChart3,
-  Users,
   Zap
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -60,49 +53,6 @@ const statCards = [
     color: 'text-orange-600',
     bgColor: 'bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900',
     trend: '-25%'
-  },
-];
-
-const recentActivities = [
-  {
-    id: 1,
-    type: 'permit',
-    title: 'Building Permit #2024-001 Approved',
-    description: 'Commercial construction permit for 123 Main St',
-    timestamp: '2 hours ago',
-    status: 'approved',
-    icon: CheckCircle,
-    color: 'text-green-600'
-  },
-  {
-    id: 2,
-    type: 'audit',
-    title: 'Environmental Audit Completed',
-    description: 'Quarterly compliance audit finished with 96% score',
-    timestamp: '4 hours ago',
-    status: 'completed',
-    icon: Shield,
-    color: 'text-blue-600'
-  },
-  {
-    id: 3,
-    type: 'document',
-    title: 'New Document Uploaded',
-    description: 'Safety protocol document added to compliance folder',
-    timestamp: '6 hours ago',
-    status: 'uploaded',
-    icon: FileText,
-    color: 'text-purple-600'
-  },
-  {
-    id: 4,
-    type: 'alert',
-    title: 'Renewal Notice',
-    description: 'Food service license expires in 30 days',
-    timestamp: '1 day ago',
-    status: 'warning',
-    icon: AlertTriangle,
-    color: 'text-yellow-600'
   },
 ];
 
@@ -196,7 +146,7 @@ export function DashboardOverview() {
 
       {/* Stats Cards */}
       <motion.div variants={itemVariants}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
           {statCards.map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -230,167 +180,57 @@ export function DashboardOverview() {
 
       {/* Quick Actions */}
       <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>
-              Common tasks to streamline your regulatory workflow
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+          <div className="p-6">
+            <h3 className="font-semibold text-lg text-foreground mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
               {quickActions.map((action, index) => (
                 <motion.div
                   key={action.title}
                   variants={itemVariants}
-                  whileHover={{ y: -4 }}
+                  whileHover={{ scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 300 }}
+                  className="group relative"
                 >
-                  <Button
-                    variant="outline"
-                    className="h-auto p-4 flex flex-col items-start space-y-3 hover:border-primary/50 group"
+                  <div className="absolute inset-0 rounded-lg group-hover:bg-accent/50 transition-colors duration-200" />
+                  <button
                     onClick={() => router.push(action.href)}
+                    className="relative w-full p-4 flex flex-col min-h-[140px]"
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${action.color} text-white`}>
+                    <div className="flex items-center justify-between w-full gap-3 mb-3">
+                      <div className={`flex-shrink-0 p-2.5 rounded-lg bg-gradient-to-br ${action.color} text-white shadow-sm group-hover:shadow-md transition-shadow`}>
                         <action.icon className="h-5 w-5" />
                       </div>
                       {action.badge && (
-                        <Badge variant={action.badge === 'New' ? 'default' : 'secondary'} className="text-xs">
+                        <Badge 
+                          variant={action.badge === 'New' ? 'default' : 'secondary'} 
+                          className="flex-shrink-0 text-xs group-hover:bg-background/80"
+                        >
                           {action.badge}
                         </Badge>
                       )}
                     </div>
-                    <div className="text-left">
-                      <div className="font-medium text-sm group-hover:text-primary transition-colors">
+
+                    <div className="flex-grow min-h-0 w-full">
+                      <h4 className="font-medium text-sm group-hover:text-primary transition-colors truncate">
                         {action.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
+                      </h4>
+                      <p className="text-xs text-muted-foreground group-hover:text-muted-foreground/80 line-clamp-2 mt-1">
                         {action.description}
-                      </div>
+                      </p>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                  </Button>
+
+                    <div className="flex items-center justify-between w-full mt-3 pt-2 border-t border-border/50">
+                      <span className="text-xs text-muted-foreground/60">Click to view</span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    </div>
+                  </button>
                 </motion.div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Recent Activity */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Recent Activity
-            </CardTitle>
-            <CardDescription>
-              Latest updates from your regulatory operations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <motion.div
-                  key={activity.id}
-                  className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                  whileHover={{ x: 4 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <activity.icon className={`w-5 h-5 ${activity.color}`} />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{activity.title}</p>
-                    <p className="text-sm text-muted-foreground">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-6 text-center">
-              <Button variant="outline" onClick={() => router.push('/dashboard/activity')}>
-                View All Activity
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Compliance Score Widget */}
-      <motion.div variants={itemVariants}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Compliance Overview
-              </CardTitle>
-              <CardDescription>
-                Your regulatory compliance status across different areas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: 'Environmental', score: 96, color: 'bg-green-500' },
-                  { name: 'Safety', score: 92, color: 'bg-blue-500' },
-                  { name: 'Financial', score: 89, color: 'bg-purple-500' },
-                  { name: 'Operational', score: 94, color: 'bg-orange-500' },
-                ].map((area) => (
-                  <div key={area.name} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium">{area.name}</span>
-                      <span className="text-muted-foreground">{area.score}%</span>
-                    </div>
-                    <Progress value={area.score} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Team Activity
-              </CardTitle>
-              <CardDescription>
-                Recent team actions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: 'Sarah Chen', action: 'Completed audit review', time: '2h ago' },
-                  { name: 'Mike Johnson', action: 'Submitted permit docs', time: '4h ago' },
-                  { name: 'Lisa Wang', action: 'Updated compliance checklist', time: '6h ago' },
-                ].map((member, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-xs font-medium text-primary-foreground">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.action}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{member.time}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </motion.div>
     </motion.div>
   );
-} 
+}

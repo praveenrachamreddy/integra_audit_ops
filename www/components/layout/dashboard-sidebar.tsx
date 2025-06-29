@@ -46,13 +46,6 @@ const navigation = [
     badge: 'NEW'
   },
   { 
-    name: 'AI Assistant', 
-    href: '/dashboard/assistant', 
-    icon: MessageSquare,
-    description: 'Regulatory guidance',
-    badge: null
-  },
-  { 
     name: 'Documents', 
     href: '/dashboard/documents', 
     icon: FileText,
@@ -61,19 +54,24 @@ const navigation = [
   },
 ];
 
-const secondaryNavigation = [
-  { 
-    name: 'Settings', 
-    href: '/dashboard/settings', 
-    icon: Settings,
-    description: 'Account & preferences'
-  },
-  { 
-    name: 'Help & Support', 
-    href: '/dashboard/help', 
-    icon: HelpCircle,
-    description: 'Get assistance'
-  },
+const secondaryNavigation: {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  description: string;
+}[] = [
+  // { 
+  //   name: 'Settings', 
+  //   href: '/dashboard/settings', 
+  //   icon: Settings,
+  //   description: 'Account & preferences'
+  // },
+  // { 
+  //   name: 'Help & Support', 
+  //   href: '/dashboard/help', 
+  //   icon: HelpCircle,
+  //   description: 'Get assistance'
+  // },
 ];
 
 const quickStats = [
@@ -93,60 +91,11 @@ export function DashboardSidebar() {
 
   return (
     <motion.div 
-      className="flex flex-col h-full bg-gradient-to-b from-card to-card/50 border-r border-border/50 backdrop-blur-xl"
+      className="flex flex-col h-screen bg-gradient-to-b from-card to-card/50 border-r border-border/50 backdrop-blur-xl"
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Logo & Brand */}
-      <div className="flex items-center h-16 px-6 border-b border-border/50">
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary via-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            </div>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">RegOps</h1>
-            <p className="text-xs text-muted-foreground">AI-Powered Platform</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="px-6 py-4">
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Quick Stats
-          </h3>
-          <div className="grid gap-3">
-            {quickStats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                className="p-3 rounded-lg bg-gradient-to-r from-background/50 to-background/30 border border-border/50 hover:border-primary/20 transition-colors"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <stat.icon className={`w-4 h-4 ${stat.color}`} />
-                    <span className="text-xs text-muted-foreground">{stat.label}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-foreground">{stat.value}</div>
-                    <div className="text-xs text-green-600">{stat.trend}</div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       <Separator className="mx-6" />
 
