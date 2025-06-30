@@ -10,33 +10,33 @@ import Link from 'next/link';
 
 const teamMembers = [
   {
-    name: 'Alex Johnson',
-    role: 'Full Stack Developer',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-    bio: 'Passionate about building scalable web applications and regulatory technology solutions.',
+    name: 'Kenechukwu Nnakwue',
+    role: 'Software Engineering Lead & Full Stack Developer',
+    image: 'https://media.licdn.com/dms/image/v2/D4D35AQHUyHgpxh78-Q/profile-framedphoto-shrink_400_400/B4DZetndehHkAc-/0/1750964492453?e=1751918400&v=beta&t=ibW4nNgNaHj09aONVTseUu8IY1svI79CqMahU7ta2K0',
+    bio: 'Software Engineering Lead with expertise in JavaScript/TypeScript development. Passionate about collaboration, mentorship, and building scalable regulatory technology solutions. Known as #your_tech_buddy in the developer community.',
     experience: '5+ years',
-    location: 'San Francisco, CA',
-    skills: ['React', 'Node.js', 'TypeScript', 'Python', 'AWS'],
-    interests: ['Rock Climbing', 'Photography', 'Open Source'],
+    location: 'Nigeria',
+    skills: ['JavaScript', 'TypeScript', 'Node.js', 'React', 'Full Stack Development', 'Software Architecture'],
+    interests: ['Open Source', 'Mentorship', 'Tech Community', 'Networking'],
     social: {
-      github: 'alexjohnson',
-      linkedin: 'alex-johnson-dev',
-      email: 'alex@regops.com'
+      github: 'KeneHermitCoder',
+      linkedin: 'kenechukwu-nnakwue-a854081b5',
+      email: 'kene@regops.com'
     }
   },
   {
-    name: 'Sarah Chen',
-    role: 'Frontend Developer & UX Designer',
-    image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
-    bio: 'Creating beautiful, user-friendly interfaces with a focus on accessibility and performance.',
-    experience: '4+ years',
-    location: 'Seattle, WA',
-    skills: ['React', 'Next.js', 'Tailwind CSS', 'Figma', 'TypeScript'],
-    interests: ['Digital Art', 'Hiking', 'Cooking'],
+    name: 'Anthony Tagbo Okoye',
+    role: 'Backend Developer & Systems Architect',
+    image: 'https://media.licdn.com/dms/image/v2/D4D03AQExVNiXDc0gFA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1709297967935?e=1756944000&v=beta&t=lEwY2eWpDeDwXfKT0KdAun89qm1mmhjGTGyJInfAn8w',
+    bio: 'Experienced backend developer specializing in scalable systems and API development. Expert in multiple programming languages with a focus on building robust regulatory compliance platforms.',
+    experience: '5+ years',
+    location: 'Nigeria',
+    skills: ['TypeScript', 'PHP', 'Go', 'Python', 'Laravel', 'REST APIs', 'Blockchain', 'System Architecture'],
+    interests: ['Blockchain Technology', 'Web Crawling', 'P2P Systems', 'DevOps'],
     social: {
-      github: 'sarahchen',
-      linkedin: 'sarah-chen-ux',
-      email: 'sarah@regops.com'
+      github: 'anthony-okoye',
+      linkedin: 'tagbo-okoye-666819167',
+      email: 'anthony@regops.com'
     }
   }
 ];

@@ -1,48 +1,46 @@
 import { notFound } from 'next/navigation';
-import { SettingsContent } from '@/components/dashboard/settings-content';
-import { AssistantContent } from '@/components/dashboard/assistant-content';
-import { DocumentsContent } from '@/components/dashboard/documents-content';
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
 import { AuditGenieContent } from '@/components/dashboard/audit-genie-content';
-import { SmartPermitContent } from '@/components/dashboard/smart-permit-content';
+import { AssistantContent } from '@/components/dashboard/assistant-content';
+import { QAContent } from '@/components/dashboard/qa-content';
+import { DocumentsContent } from '@/components/dashboard/documents-content';
+import { SettingsContent } from '@/components/dashboard/settings-content';
+import { HelpContent } from '@/components/dashboard/help-content';
+
+// Map of valid routes to their components
+const routeComponents = {
+  'overview': DashboardOverview,
+  'audit': AuditGenieContent,
+  'assistant': AssistantContent,
+  'qa': QAContent,
+  'documents': DocumentsContent,
+  'settings': SettingsContent,
+  'help': HelpContent,
+} as const;
 
 interface DashboardPageProps {
   params: {
-    slug: string[];
+    slug?: string[];
   };
 }
 
-const routeComponents = {
-  'overview': DashboardOverview,
-  'permits': SmartPermitContent,
-  'smart-permit': SmartPermitContent, // Legacy support
-  'audit': AuditGenieContent,
-  'audit-genie': AuditGenieContent, // Legacy support
-  'assistant': AssistantContent,
-  'documents': DocumentsContent,
-  'settings': SettingsContent,
-} as const;
-
 export default function DashboardPage({ params }: DashboardPageProps) {
+  // Default to overview if no slug
   const route = params.slug?.[0] || 'overview';
-  const Component = routeComponents[route as keyof typeof routeComponents];
-
-  if (!Component) {
+  
+  // Check if route is valid
+  if (!(route in routeComponents)) {
     notFound();
   }
-
+  
+  const Component = routeComponents[route as keyof typeof routeComponents];
+  
   return <Component />;
 }
 
+// Generate static params for valid routes
 export function generateStaticParams() {
-  return [
-    { slug: ['overview'] },
-    { slug: ['permits'] },
-    { slug: ['smart-permit'] },
-    { slug: ['audit'] },
-    { slug: ['audit-genie'] },
-    { slug: ['assistant'] },
-    { slug: ['documents'] },
-    { slug: ['settings'] },
-  ];
+  return Object.keys(routeComponents).map((route) => ({
+    slug: [route],
+  }));
 } 
