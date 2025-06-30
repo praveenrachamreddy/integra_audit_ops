@@ -1,4 +1,4 @@
-import { authApi } from './auth';
+import BaseApiClient, { APIError, } from '.';
 
 export interface AuditReportSection {
   title: string;
@@ -25,18 +25,21 @@ export interface AuditHistoryResponse {
   history: any;
 }
 
-class AuditApi {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  private apiPath = '/api/v1/audit';
+class AuditApi extends BaseApiClient {
+  constructor() {
+    super();
+    this.apiPath = '/audit';
+  }
 
   async runAudit(
     auditRequest: AuditRunRequest,
     documents?: File[],
     systemLogs?: File[]
   ): Promise<AuditRunResponse> {
-    const formData = new FormData();
-    
-    formData.append('audit_type', auditRequest.audit_type || 'general');
+    try {
+      const formData = new FormData();
+      
+    formData.append('audit_type', auditRequest.audit_type ?? 'general');
     formData.append('audit_details', JSON.stringify(auditRequest.audit_details));
     
     if (auditRequest.mongo_uri) {
@@ -57,52 +60,39 @@ class AuditApi {
       });
     }
 
-    const response = await fetch(`${this.baseUrl}${this.apiPath}/run`, {
+    return await this.makeRequest<AuditRunResponse>('/run', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authApi.getAccessToken()}`,
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
-      throw new Error(errorData.detail || 'Failed to run audit');
+        body: formData,
+      });
+    } catch (error) {
+      console.error('Audit run failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to run audit', 500);
     }
-
-    return response.json();
   }
 
+
   async getAuditHistory(userId: string): Promise<AuditHistoryResponse> {
-    const response = await fetch(`${this.baseUrl}${this.apiPath}/history?user_id=${userId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authApi.getAccessToken()}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
-      throw new Error(errorData.detail || 'Failed to get audit history');
+    try {
+      return await this.makeRequest<AuditHistoryResponse>('/history?user_id=${userId}', {
+        method: 'GET',
+      });
+    } catch (error) {
+      console.error('Audit history failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to get audit history', 500);
     }
-
-    return response.json();
   }
 
   async downloadPdf(fileId: string): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}${this.apiPath}/pdf/${fileId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authApi.getAccessToken()}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to download PDF');
+    try {
+      return await this.makeRequest<Blob>('/pdf/${fileId}', {
+        method: 'GET',
+      });
+    } catch (error) {
+      console.error('Audit history failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to get audit history', 500);
     }
-
-    return response.blob();
   }
+
 }
 
 export const auditApi = new AuditApi(); 

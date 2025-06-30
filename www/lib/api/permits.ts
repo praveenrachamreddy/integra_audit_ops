@@ -1,4 +1,4 @@
-import { authApi } from './auth';
+import BaseAPIClient, { APIError } from '.';
 
 export interface ProjectDetails {
   prompt: string;
@@ -23,45 +23,80 @@ export interface PermitSubmissionResponse {
   submission: any;
 }
 
-class PermitApi {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  private apiPath = '/api/v1/permits';
+// New types for the analyze_permit endpoint
+export interface PermitAnalysisRequest {
+  project_description: string;
+  location: string;
+}
+
+export interface RequiredDocument {
+  document_type: string;
+  description: string;
+  requirements: string[];
+  estimated_timeline: string;
+}
+
+export interface RegionSpecificRule {
+  rule_type: string;
+  description: string;
+  compliance_requirements: string[];
+  authority: string;
+}
+
+export interface ChecklistItem {
+  item: string;
+  description: string;
+  required: boolean;
+  estimated_time: string;
+}
+
+export interface PermitAnalysisResponse {
+  project_summary: Record<string, any>;
+  required_documents: RequiredDocument[];
+  region_specific_rules: RegionSpecificRule[];
+  pre_submission_checklist: ChecklistItem[];
+}
+
+class PermitApi extends BaseAPIClient {
+  constructor() {
+    super();
+  }
+
+  async analyzePermit(request: PermitAnalysisRequest): Promise<PermitAnalysisResponse> {
+    try {
+      return await this.makeRequest<PermitAnalysisResponse>('/chat/analyze_permit', {
+        body: JSON.stringify(request),
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Permit analysis failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to analyze permit requirements', 500);
+    }
+  }
 
   async suggestPermit(request: PermitSuggestRequest): Promise<PermitSuggestResponse> {
-    const response = await fetch(`${this.baseUrl}${this.apiPath}/suggest`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authApi.getAccessToken()}`,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
-      throw new Error(errorData.detail || 'Failed to get permit suggestions');
+    try {
+      return await this.makeRequest<PermitSuggestResponse>('/permits/suggest', {
+        body: JSON.stringify(request),
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Permit suggestion failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to get permit suggestions', 500);
     }
-
-    return response.json();
   }
 
   async submitPermit(request: PermitSubmissionRequest): Promise<PermitSubmissionResponse> {
-    const response = await fetch(`${this.baseUrl}${this.apiPath}/submit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authApi.getAccessToken()}`,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
-      throw new Error(errorData.detail || 'Failed to submit permit');
+    try {
+      return await this.makeRequest<PermitSubmissionResponse>('/permits/submit', {
+        body: JSON.stringify(request),
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Permit submission failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to submit permit', 500);
     }
-
-    return response.json();
   }
 }
 
-export const permitApi = new PermitApi(); 
+export const permitApi = new PermitApi();
