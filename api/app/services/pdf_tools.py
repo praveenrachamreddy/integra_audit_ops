@@ -38,6 +38,7 @@ def generate_pdf_report(
     sections: Optional[List[dict]],
     score: Optional[int],
     issues: Optional[List[dict]],
+    overall_severity: str,
     output_dir: Optional[str] = None
 ) -> str:
     """
@@ -81,18 +82,37 @@ def generate_pdf_report(
         styles['BodyText'].spaceAfter = 12
 
         # --- Modify the 'Code' style which also exists by default ---
-        styles['Code'].fontName = 'Courier'
-        styles['Code'].fontSize = 10
-        styles['Code'].leading = 12
-        styles['Code'].leftIndent = 20
-        styles['Code'].textColor = HexColor('#F43F5E') # Pink/Red
+        styles.add(ParagraphStyle(
+            name='CodeBlock',
+            parent=styles['BodyText'],
+            fontName='Courier',
+            fontSize=10,
+            leading=12,
+            leftIndent=20,
+            rightIndent=20,
+            spaceBefore=6,
+            spaceAfter=12,
+            textColor=HexColor('#334155'),
+            backColor=HexColor('#F1F5F9'),
+            borderPadding=5,
+        ))
 
-        # --- Add new custom styles ---
-        styles.add(ParagraphStyle(name='Score',
-                                  parent=styles['h2'], # Inherit from H2
-                                  alignment=TA_CENTER,
-                                  textColor=HexColor('#4CAF50'))) # Green
+        # --- Define Score Color based on Severity ---
+        severity_colors = {
+            "High": HexColor('#EF4444'),    # Red-500
+            "Medium": HexColor('#F97316'), # Orange-500
+            "Low": HexColor('#EAB308'),     # Yellow-500
+            "None": HexColor('#22C55E'),    # Green-500
+        }
+        score_color = severity_colors.get(overall_severity, HexColor('#64748B')) # Default to Slate-500
         
+        styles.add(ParagraphStyle(
+            name='Score',
+            parent=styles['h2'],
+            alignment=TA_CENTER,
+            textColor=score_color
+        ))
+
         # --- Build the story ---
         story.append(Paragraph("Compliance Audit Report", styles['Title']))
 
@@ -128,7 +148,7 @@ def generate_pdf_report(
                 story.append(Paragraph(issue_title, styles['h3']))
                 story.append(Paragraph(severity, styles['BodyText']))
                 story.append(Paragraph("Recommendation:", styles['h3']))
-                story.append(Paragraph(recommendation.replace('\n', '<br/>'), styles['Code']))
+                story.append(Paragraph(recommendation.replace('\n', '<br/>'), styles['CodeBlock']))
                 story.append(Spacer(1, 24))
         
         doc.build(story)
