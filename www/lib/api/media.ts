@@ -1,7 +1,7 @@
 import BaseApiClient, { APIError, } from '.';
 
 export interface StartVideoConversationRequest {
-  permit_details: Record<string, any>;
+  [key: string]: Record<string, any>;
 }
 
 export interface VideoConversationResponse {
@@ -9,7 +9,8 @@ export interface VideoConversationResponse {
 }
 
 export interface StartAudioConversationRequest {
-  permit_details: Record<string, any>;
+  // permit_details: Record<string, any>;
+  [key: string]: Record<string, any>;
 }
 
 export interface AudioConversationConfigResponse {

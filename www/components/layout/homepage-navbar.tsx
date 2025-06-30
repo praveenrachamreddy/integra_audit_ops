@@ -91,7 +91,7 @@ export default function HomepageNavbar() {
           {/* Desktop and Tablet Navigation */}
           <div className="hidden md:flex items-center">
             {/* Navigation Links */}
-            <div className="flex items-center space-x-1 lg:space-x-6 lg:hidden mr-4">
+            <div className="flex items-center space-x-1 lg:space-x-6  mr-4">
               {isDashboardRoute ? (
                 // Dashboard navigation - more compact on tablet
                 <div className="flex items-center space-x-1 lg:space-x-6">
@@ -140,13 +140,13 @@ export default function HomepageNavbar() {
               <div className="flex items-center space-x-2 lg:space-x-4">
                 {/* Dashboard/Home Link */}
                 {isDashboardRoute ? (
-                  // <Button asChild variant="outline" size="sm" className="hidden lg:flex">
-                  //   <Link href="/" className="flex items-center gap-2">
-                  //     <Home className="h-4 w-4" />
-                  //     <span className="hidden lg:inline">Home</span>
-                  //   </Link>
-                  // </Button>
-                  <></>
+                  <Button asChild variant="outline" size="sm" className="hidden lg:flex">
+                    <Link href="/" className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      <span className="hidden lg:inline">Home</span>
+                    </Link>
+                  </Button>
+                  // <></>
                 ) : (
                   <Button asChild variant="outline" size="sm">
                     <Link href="/dashboard" className="flex items-center gap-2">

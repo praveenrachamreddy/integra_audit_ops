@@ -1,93 +1,187 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield,
   Scan,
   AlertTriangle,
   CheckCircle,
-  XCircle,
   FileText,
   Download,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
+  Upload,
   Zap,
   Clock,
   Target,
-  RefreshCw
+  RefreshCw,
+  Plus,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useAuthStore } from '@/lib/store/auth-store';
+import { auditApi } from '@/lib/api/audit';
+import { toast } from 'sonner';
 
-const mockAudits = [
-  {
-    id: 'AUD-2024-001',
-    title: 'Q1 Environmental Compliance Audit',
-    type: 'Environmental',
-    status: 'completed',
-    score: 87,
-    riskLevel: 'low',
-    completedDate: '2024-03-15',
-    findings: {
-      critical: 0,
-      high: 2,
-      medium: 5,
-      low: 8
-    }
-  },
-  {
-    id: 'AUD-2024-002',
-    title: 'Safety Protocol Review',
-    type: 'Safety',
-    status: 'in-progress',
-    score: 72,
-    riskLevel: 'medium',
-    startDate: '2024-03-20',
-    findings: {
-      critical: 1,
-      high: 3,
-      medium: 4,
-      low: 6
-    }
-  },
-  {
-    id: 'AUD-2024-003',
-    title: 'Financial Compliance Check',
-    type: 'Financial',
-    status: 'scheduled',
-    scheduledDate: '2024-04-01',
-    riskLevel: 'high'
-  }
-];
-
-const complianceMetrics = [
-  { label: 'Overall Compliance Score', value: 82, change: +5, trend: 'up' },
-  { label: 'Critical Issues', value: 3, change: -2, trend: 'down' },
-  { label: 'Audit Frequency', value: 12, change: +1, trend: 'up' },
-  { label: 'Resolution Time (days)', value: 7, change: -3, trend: 'down' }
-];
-
-const riskLevels = {
-  low: { color: 'bg-green-500', label: 'Low Risk', textColor: 'text-green-700' },
-  medium: { color: 'bg-yellow-500', label: 'Medium Risk', textColor: 'text-yellow-700' },
-  high: { color: 'bg-red-500', label: 'High Risk', textColor: 'text-red-700' }
-};
+interface AuditRun {
+  audit_id: string;
+  company_name: string;
+  run_date: string;
+  score: number;
+  pdf_url: string;
+}
 
 const auditTypes = [
-  { name: 'Environmental', icon: Shield, count: 12, color: 'text-green-600' },
-  { name: 'Safety', icon: AlertTriangle, count: 8, color: 'text-yellow-600' },
-  { name: 'Financial', icon: BarChart3, count: 15, color: 'text-blue-600' },
-  { name: 'Operational', icon: Target, count: 6, color: 'text-purple-600' }
+  { value: 'environmental', label: 'Environmental Compliance', description: 'Environmental impact and regulations' },
+  { value: 'safety', label: 'Safety Protocols', description: 'Workplace safety and health standards' },
+  { value: 'financial', label: 'Financial Compliance', description: 'Financial regulations and reporting' },
+  { value: 'operational', label: 'Operational Audit', description: 'Business operations and processes' },
+  { value: 'general', label: 'General Compliance', description: 'Comprehensive compliance review' }
+];
+
+const controlFamilies = [
+  'Access Control',
+  'Asset Management', 
+  'Business Continuity',
+  'Compliance',
+  'Data Protection',
+  'Environmental',
+  'Financial Controls',
+  'Human Resources',
+  'Information Security',
+  'Operational Controls',
+  'Risk Management',
+  'Safety Protocols'
 ];
 
 export function AuditGenieContent() {
-  const [selectedAudit, setSelectedAudit] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const [isRunning, setIsRunning] = useState(false);
+  const [auditHistory, setAuditHistory] = useState<AuditRun[]>([]);
+  const [showNewAudit, setShowNewAudit] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    audit_type: '',
+    company_name: '',
+    audit_scope: '',
+    control_families: [] as string[]
+  });
+
+  // Load audit history on mount
+  useEffect(() => {
+    loadAuditHistory();
+  }, []);
+
+  const loadAuditHistory = async () => {
+    if (!user?.id) return;
+    
+    setIsLoadingHistory(true);
+    try {
+      const response = await auditApi.getAuditHistory(user.id.toString());
+      setAuditHistory(response.history || []);
+    } catch (error) {
+      console.error('Failed to load audit history:', error);
+      toast.error('Failed to load audit history');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+  }, []);
+
+  const removeFile = useCallback((index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleControlFamilyToggle = useCallback((family: string) => {
+    setFormData(prev => ({
+      ...prev,
+      control_families: prev.control_families.includes(family)
+        ? prev.control_families.filter(f => f !== family)
+        : [...prev.control_families, family]
+    }));
+  }, []);
+
+  const runAudit = useCallback(async () => {
+    if (!formData.audit_type || !formData.company_name || !formData.audit_scope || formData.control_families.length === 0) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (selectedFiles.length === 0) {
+      toast.error('Please upload at least one document');
+      return;
+    }
+
+    setIsRunning(true);
+    
+    try {
+      const auditRequest = {
+        audit_details: {
+          company_name: formData.company_name,
+          audit_scope: formData.audit_scope,
+          control_families: formData.control_families
+        },
+        audit_type: formData.audit_type
+      };
+
+      const result = await auditApi.runAudit(auditRequest, selectedFiles);
+      
+      toast.success('Audit completed successfully!');
+      
+      // Reload history to get the latest audit
+      await loadAuditHistory();
+      
+      setShowNewAudit(false);
+      
+      // Reset form
+      setFormData({
+        audit_type: '',
+        company_name: '',
+        audit_scope: '',
+        control_families: []
+      });
+      setSelectedFiles([]);
+      
+    } catch (error) {
+      console.error('Audit failed:', error);
+      toast.error('Audit failed. Please try again.');
+    } finally {
+      setIsRunning(false);
+    }
+  }, [formData, selectedFiles, loadAuditHistory]);
+
+  const downloadReport = useCallback(async (pdfUrl: string, companyName: string) => {
+    try {
+      const fileId = pdfUrl.replace('/api/v1/audit/pdf/', '');
+      const blob = await auditApi.downloadPdf(fileId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-report-${companyName}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Report downloaded successfully');
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download report');
+    }
+  }, []);
 
   return (
     <div className="space-y-6 p-6">
@@ -103,113 +197,266 @@ export function AuditGenieContent() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Scan className="h-4 w-4" />
-            Quick Scan
-          </Button>
-          <Button className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            New Audit
-          </Button>
+          <Dialog open={showNewAudit} onOpenChange={setShowNewAudit}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Audit
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Audit</DialogTitle>
+                <DialogDescription>
+                  Configure your compliance audit parameters and upload relevant documents.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company_name">Company Name *</Label>
+                    <Input
+                      id="company_name"
+                      value={formData.company_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                      placeholder="Enter company name"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="audit_type">Audit Type *</Label>
+                    <Select value={formData.audit_type} onValueChange={(value) => setFormData(prev => ({ ...prev, audit_type: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select audit type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {auditTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            <div>
+                              <div className="font-medium">{type.label}</div>
+                              <div className="text-sm text-muted-foreground">{type.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="audit_scope">Audit Scope *</Label>
+                  <Textarea
+                    id="audit_scope"
+                    value={formData.audit_scope}
+                    onChange={(e) => setFormData(prev => ({ ...prev, audit_scope: e.target.value }))}
+                    placeholder="Describe the scope and objectives of this audit..."
+                    rows={3}
+                  />
+                </div>
+
+                {/* Control Families */}
+                <div className="space-y-2">
+                  <Label>Control Families * (Select at least one)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                    {controlFamilies.map((family) => (
+                      <label key={family} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.control_families.includes(family)}
+                          onChange={() => handleControlFamilyToggle(family)}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">{family}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* File Upload */}
+                <div className="space-y-2">
+                  <Label>Documents * (Upload compliance documents)</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
+                      <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT files</p>
+                    </label>
+                  </div>
+                  
+                  {selectedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Selected Files ({selectedFiles.length})</Label>
+                      <div className="max-h-32 overflow-y-auto space-y-1">
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <span className="text-sm truncate">{file.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowNewAudit(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={runAudit} disabled={isRunning}>
+                    {isRunning && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
+                    {isRunning ? 'Running Audit...' : 'Run Audit'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Compliance Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {complianceMetrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
-                  <p className="text-2xl font-bold">{metric.value}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {metric.trend === 'up' ? (
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-red-600" />
-                    )}
-                    <span className={`text-sm ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                      {metric.change > 0 ? '+' : ''}{metric.change}
-                    </span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="audits">Audits</TabsTrigger>
-          <TabsTrigger value="findings">Findings</TabsTrigger>
+          <TabsTrigger value="history">Audit History</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Audit Types */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Audit Categories</CardTitle>
-              <CardDescription>Overview of different audit types and their frequency</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {auditTypes.map((type, index) => (
-                  <div key={index} className="flex items-center gap-3 p-4 rounded-lg border">
-                    <type.icon className={`h-8 w-8 ${type.color}`} />
-                    <div>
-                      <p className="font-semibold">{type.name}</p>
-                      <p className="text-sm text-muted-foreground">{type.count} audits</p>
-                    </div>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Audits</p>
+                    <p className="text-2xl font-bold">{auditHistory.length}</p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Avg. Score</p>
+                    <p className="text-2xl font-bold">
+                      {auditHistory.length > 0 
+                        ? Math.round(auditHistory.reduce((acc, audit) => acc + audit.score, 0) / auditHistory.length)
+                        : 0}%
+                    </p>
+                  </div>
+                  <Target className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">This Month</p>
+                    <p className="text-2xl font-bold">
+                      {auditHistory.filter(audit => 
+                        new Date(audit.run_date).getMonth() === new Date().getMonth()
+                      ).length}
+                    </p>
+                  </div>
+                  <Clock className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
+                    <p className="text-2xl font-bold">100%</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Risk Assessment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Risk Assessment</CardTitle>
-              <CardDescription>Real-time compliance risk analysis</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Environmental Compliance</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">Low Risk</Badge>
+          {/* Getting Started */}
+          {auditHistory.length === 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Get Started with AuditGenie</CardTitle>
+                <CardDescription>Run your first compliance audit in minutes</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4">
+                    <Upload className="h-12 w-12 mx-auto mb-2 text-primary" />
+                    <h3 className="font-semibold">1. Upload Documents</h3>
+                    <p className="text-sm text-muted-foreground">Upload your compliance documents and policies</p>
+                  </div>
+                  <div className="text-center p-4">
+                    <Scan className="h-12 w-12 mx-auto mb-2 text-primary" />
+                    <h3 className="font-semibold">2. Configure Audit</h3>
+                    <p className="text-sm text-muted-foreground">Select audit type and control families</p>
+                  </div>
+                  <div className="text-center p-4">
+                    <FileText className="h-12 w-12 mx-auto mb-2 text-primary" />
+                    <h3 className="font-semibold">3. Get Results</h3>
+                    <p className="text-sm text-muted-foreground">Receive detailed audit report with recommendations</p>
+                  </div>
                 </div>
-                <Progress value={85} className="h-2" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Safety Protocols</span>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Medium Risk</Badge>
+                <div className="text-center">
+                  <Button onClick={() => setShowNewAudit(true)} size="lg">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Start Your First Audit
+                  </Button>
                 </div>
-                <Progress value={68} className="h-2" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Financial Compliance</span>
-                  <Badge variant="secondary" className="bg-red-100 text-red-800">High Risk</Badge>
-                </div>
-                <Progress value={45} className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
-        <TabsContent value="audits" className="space-y-4">
-          {mockAudits.map((audit, index) => {
-            const riskInfo = riskLevels[audit.riskLevel as keyof typeof riskLevels];
-            
-            return (
+        <TabsContent value="history" className="space-y-4">
+          {isLoadingHistory ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
+                <p>Loading audit history...</p>
+              </CardContent>
+            </Card>
+          ) : auditHistory.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No audits yet</h3>
+                <p className="text-muted-foreground mb-4">Run your first audit to see results here</p>
+                <Button onClick={() => setShowNewAudit(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Audit
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            auditHistory.map((audit, index) => (
               <motion.div
-                key={audit.id}
+                key={audit.audit_id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -219,150 +466,41 @@ export function AuditGenieContent() {
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                       <div className="flex-1 space-y-3">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                          <h3 className="text-lg font-semibold">{audit.title}</h3>
-                          <Badge variant="outline">{audit.id}</Badge>
+                          <h3 className="text-lg font-semibold">{audit.company_name}</h3>
+                          <Badge variant="default">Completed</Badge>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-muted-foreground" />
-                            <span>{audit.type} Audit</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>
-                              {audit.status === 'completed' && audit.completedDate && 
-                                `Completed: ${new Date(audit.completedDate).toLocaleDateString()}`}
-                              {audit.status === 'in-progress' && audit.startDate && 
-                                `Started: ${new Date(audit.startDate).toLocaleDateString()}`}
-                              {audit.status === 'scheduled' && audit.scheduledDate && 
-                                `Scheduled: ${new Date(audit.scheduledDate).toLocaleDateString()}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${riskInfo.color}`} />
-                            <span className={riskInfo.textColor}>{riskInfo.label}</span>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{new Date(audit.run_date).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        
-                        {audit.findings && (
-                          <div className="flex flex-wrap gap-2">
-                            {audit.findings.critical > 0 && (
-                              <Badge variant="destructive">{audit.findings.critical} Critical</Badge>
-                            )}
-                            {audit.findings.high > 0 && (
-                              <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                                {audit.findings.high} High
-                              </Badge>
-                            )}
-                            {audit.findings.medium > 0 && (
-                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                                {audit.findings.medium} Medium
-                              </Badge>
-                            )}
-                            {audit.findings.low > 0 && (
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                {audit.findings.low} Low
-                              </Badge>
-                            )}
-                          </div>
-                        )}
                       </div>
                       
                       <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:items-end">
-                        {audit.score && (
-                          <div className="text-center lg:text-right">
-                            <p className="text-2xl font-bold text-primary">{audit.score}%</p>
-                            <p className="text-sm text-muted-foreground">Compliance Score</p>
-                          </div>
-                        )}
-                        
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <FileText className="h-4 w-4 mr-1" />
-                            View Details
-                          </Button>
-                          {audit.status === 'completed' && (
-                            <Button variant="outline" size="sm">
-                              <Download className="h-4 w-4 mr-1" />
-                              Report
-                            </Button>
-                          )}
-                          {audit.status === 'in-progress' && (
-                            <Button variant="outline" size="sm">
-                              <RefreshCw className="h-4 w-4 mr-1" />
-                              Update
-                            </Button>
-                          )}
+                        <div className="text-center lg:text-right">
+                          <p className="text-2xl font-bold text-primary">{audit.score}%</p>
+                          <p className="text-sm text-muted-foreground">Compliance Score</p>
                         </div>
+                        
+                        {audit.pdf_url && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => downloadReport(audit.pdf_url, audit.company_name)}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Download Report
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
-            );
-          })}
-        </TabsContent>
-
-        <TabsContent value="findings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Findings</CardTitle>
-              <CardDescription>Latest compliance issues and recommendations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  {
-                    severity: 'high',
-                    title: 'Missing Environmental Impact Documentation',
-                    description: 'Required environmental assessment documents are missing for Project Alpha.',
-                    recommendation: 'Upload environmental impact study within 7 days.',
-                    dueDate: '2024-04-01'
-                  },
-                  {
-                    severity: 'medium',
-                    title: 'Outdated Safety Training Records',
-                    description: 'Employee safety training certificates have expired for 5 staff members.',
-                    recommendation: 'Schedule renewal training sessions immediately.',
-                    dueDate: '2024-03-30'
-                  },
-                  {
-                    severity: 'low',
-                    title: 'Minor Documentation Formatting Issues',
-                    description: 'Some permit applications have minor formatting inconsistencies.',
-                    recommendation: 'Review and standardize document templates.',
-                    dueDate: '2024-04-15'
-                  }
-                ].map((finding, index) => (
-                  <div key={index} className="flex gap-4 p-4 border rounded-lg">
-                    <div className="flex-shrink-0">
-                      {finding.severity === 'high' && <AlertTriangle className="h-5 w-5 text-red-600" />}
-                      {finding.severity === 'medium' && <AlertTriangle className="h-5 w-5 text-yellow-600" />}
-                      {finding.severity === 'low' && <CheckCircle className="h-5 w-5 text-green-600" />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{finding.title}</h4>
-                        <Badge 
-                          variant={finding.severity === 'high' ? 'destructive' : 'secondary'}
-                          className={
-                            finding.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            finding.severity === 'low' ? 'bg-green-100 text-green-800' : ''
-                          }
-                        >
-                          {finding.severity.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
-                      <p className="text-sm font-medium mb-1">Recommendation: {finding.recommendation}</p>
-                      <p className="text-xs text-muted-foreground">Due: {new Date(finding.dueDate).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
@@ -372,30 +510,39 @@ export function AuditGenieContent() {
               <CardDescription>Download and share compliance reports</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: 'Q1 2024 Compliance Summary', date: '2024-03-31', type: 'PDF', size: '2.4 MB' },
-                  { name: 'Environmental Audit Report', date: '2024-03-15', type: 'PDF', size: '1.8 MB' },
-                  { name: 'Safety Protocol Assessment', date: '2024-03-10', type: 'PDF', size: '3.1 MB' },
-                  { name: 'Risk Analysis Dashboard', date: '2024-03-05', type: 'Excel', size: '856 KB' }
-                ].map((report, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-8 w-8 text-primary" />
-                      <div>
-                        <h4 className="font-semibold">{report.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(report.date).toLocaleDateString()} • {report.type} • {report.size}
-                        </p>
+              {auditHistory.filter(audit => audit.pdf_url).length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No reports available</h3>
+                  <p className="text-muted-foreground">Complete an audit to generate downloadable reports</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {auditHistory
+                    .filter(audit => audit.pdf_url)
+                    .map((audit) => (
+                      <div key={audit.audit_id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-8 w-8 text-primary" />
+                          <div>
+                            <h4 className="font-semibold">{audit.company_name} Compliance Audit</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(audit.run_date).toLocaleDateString()} • PDF • Score: {audit.score}%
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => downloadReport(audit.pdf_url, audit.company_name)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </Button>
                       </div>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                    ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
