@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiClient, TokenManager, User, RegisterRequest, LoginRequest } from '@/lib/api/auth';
+import { authApi, User, RegisterRequest, LoginRequest } from '@/lib/api/auth';
 
 interface AuthState {
   user: User | null;
@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const loginData: LoginRequest = { email, password };
-          await apiClient.login(loginData);
+          await authApi.login(loginData);
           
           // Get user data after successful login
           await get().getCurrentUser();
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
             first_name: firstName,
             last_name: lastName
           };
-          await apiClient.register(registerData);
+          await authApi.register(registerData);
           set({ isLoading: false, error: null });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Registration failed';
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
       
       getCurrentUser: async () => {
         // Don't set loading if we're already loading or have no token
-        if (!TokenManager.isLoggedIn()) {
+        if (!authApi.isLoggedIn()) {
           set({ isAuthenticated: false, user: null });
           return;
         }
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
         }
         
         try {
-          const user = await apiClient.getCurrentUser();
+          const user = await authApi.getCurrentUser();
           set({
             user,
             isAuthenticated: true,
@@ -92,8 +92,6 @@ export const useAuthStore = create<AuthState>()(
           });
         } catch (error) {
           console.error('Failed to get current user:', error);
-          // If getting user fails, clear auth state
-          TokenManager.clearTokens();
           set({
             user: null,
             isAuthenticated: false,
@@ -104,7 +102,7 @@ export const useAuthStore = create<AuthState>()(
       },
       
       logout: () => {
-        apiClient.logout();
+        authApi.logout();
         set({
           user: null,
           isAuthenticated: false,
@@ -123,7 +121,7 @@ export const useAuthStore = create<AuthState>()(
       
       initialize: async () => {
         // Check if we have tokens and try to get user data
-        if (TokenManager.isLoggedIn()) {
+        if (authApi.isLoggedIn()) {
           await get().getCurrentUser();
         } else {
           set({ isAuthenticated: false, user: null, isLoading: false });

@@ -1,4 +1,4 @@
-import { authApi } from './auth';
+import BaseAPIClient, { APIError } from '.';
 
 export interface ProjectDetails {
   prompt: string;
@@ -57,40 +57,20 @@ export interface PermitAnalysisResponse {
   pre_submission_checklist: ChecklistItem[];
 }
 
-class PermitApi {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  private apiPath = '/api/v1';
-
-  private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = authApi.getAccessToken();
-    
-    const response = await fetch(`${this.baseUrl}${this.apiPath}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-Session-ID': `session_${Date.now()}`,
-        ...options.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
-      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+class PermitApi extends BaseAPIClient {
+  constructor() {
+    super();
   }
 
   async analyzePermit(request: PermitAnalysisRequest): Promise<PermitAnalysisResponse> {
     try {
       return await this.makeRequest<PermitAnalysisResponse>('/chat/analyze_permit', {
         body: JSON.stringify(request),
+        method: 'POST',
       });
     } catch (error) {
       console.error('Permit analysis failed:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to analyze permit requirements');
+      throw new APIError(error instanceof Error ? error.message : 'Failed to analyze permit requirements', 500);
     }
   }
 
@@ -98,10 +78,11 @@ class PermitApi {
     try {
       return await this.makeRequest<PermitSuggestResponse>('/permits/suggest', {
         body: JSON.stringify(request),
+        method: 'POST',
       });
     } catch (error) {
       console.error('Permit suggestion failed:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to get permit suggestions');
+      throw new APIError(error instanceof Error ? error.message : 'Failed to get permit suggestions', 500);
     }
   }
 
@@ -109,12 +90,13 @@ class PermitApi {
     try {
       return await this.makeRequest<PermitSubmissionResponse>('/permits/submit', {
         body: JSON.stringify(request),
+        method: 'POST',
       });
     } catch (error) {
       console.error('Permit submission failed:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to submit permit');
+      throw new APIError(error instanceof Error ? error.message : 'Failed to submit permit', 500);
     }
   }
 }
 
-export const permitApi = new PermitApi(); 
+export const permitApi = new PermitApi();

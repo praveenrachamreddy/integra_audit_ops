@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { TokenManager } from '@/lib/api/auth';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useRouter, usePathname } from 'next/navigation';
+import { authApi } from '../api/auth';
 
 interface UseAuthGuardOptions {
   redirectTo?: string;
@@ -20,7 +20,7 @@ export function useAuthGuard(options: UseAuthGuardOptions = {}) {
 
   useEffect(() => {
     // Initialize auth state if not already done
-    if (!isAuthenticated && !isLoading && TokenManager.isLoggedIn()) {
+    if (!isAuthenticated && !isLoading && authApi.isLoggedIn()) {
       initialize();
     }
   }, [isAuthenticated, isLoading, initialize]);
