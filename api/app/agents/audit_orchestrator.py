@@ -49,8 +49,30 @@ class AuditOrchestrator:
             enriched_issues = await asyncio.gather(*remediation_tasks)
 
         # 4. Perform final sequential steps: scoring and report section generation
-        score = max(0, 100 - (len(enriched_issues) * 10))
+        severity_weights = {
+            "High": 30,
+            "Medium": 10,
+            "Low": 5
+        }
         
+        score = 100
+        for issue in enriched_issues:
+            severity = issue.get("severity", "Low") 
+            score -= severity_weights.get(severity, 5)
+
+        score = max(0, score)
+        
+        # Determine overall severity for report coloring
+        severities = {issue.get("severity") for issue in enriched_issues}
+        if "High" in severities:
+            overall_severity = "High"
+        elif "Medium" in severities:
+            overall_severity = "Medium"
+        elif "Low" in severities:
+            overall_severity = "Low"
+        else:
+            overall_severity = "None"
+
         report_sections = []
         for issue in enriched_issues:
             report_sections.append({
@@ -68,7 +90,13 @@ class AuditOrchestrator:
         # 5. Generate and save the final PDF report
         pdf_url = None
         with TemporaryDirectory() as tmpdir:
-            pdf_path = self.reporter.create_pdf_report(score, enriched_issues, report_sections, output_dir=tmpdir)
+            pdf_path = self.reporter.create_pdf_report(
+                score=score, 
+                issues=enriched_issues, 
+                sections=report_sections, 
+                overall_severity=overall_severity,
+                output_dir=tmpdir
+            )
             pdf_id = await save_pdf_file_to_db(
                 mongodb.db,
                 pdf_path,

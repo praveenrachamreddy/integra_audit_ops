@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 router = APIRouter()
 
-@router.get("/", summary="Health check", tags=["health"])
+@router.get("/", summary="Health check")
 async def health_check(db: AsyncIOMotorDatabase = Depends(get_db)):
     try:
         # MongoDB ping

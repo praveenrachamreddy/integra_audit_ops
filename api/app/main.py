@@ -4,7 +4,14 @@ from fastapi.responses import JSONResponse
 import time
 import logging
 from app.core.config import settings, logger
-from app.api.v1.endpoints import auth, health, audit, chat, explain
+from app.api.v1.endpoints import (
+    auth, 
+    health, 
+    audit, 
+    explain, 
+    # users, 
+    media
+)
 from fastapi.openapi.utils import get_openapi
 from app.infrastructure.db import init_db, close_db
 
@@ -37,20 +44,23 @@ async def db_session_middleware(request: Request, call_next):
     return response
 
 # Set up CORS
+origins = [origin.strip() for origin in settings.BACKEND_CORS_ORIGINS.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
-app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["health"])
-app.include_router(audit.router, prefix=f"{settings.API_V1_STR}/audit", tags=["audit"])
-app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
-app.include_router(explain.router, prefix=f"{settings.API_V1_STR}/explain", tags=["explain"])
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
+app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["Health"])
+app.include_router(audit.router, prefix=f"{settings.API_V1_STR}/audit", tags=["Audit"])
+app.include_router(explain.router, prefix=f"{settings.API_V1_STR}/explain", tags=["Explain"])
+# app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
+app.include_router(media.router, prefix=f"{settings.API_V1_STR}/media", tags=["Media"])
 
 # Custom OpenAPI schema with JWT Bearer
 
