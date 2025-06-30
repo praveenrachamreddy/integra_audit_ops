@@ -1,4 +1,11 @@
-import BaseApiClient, { APIError, } from '.';
+import BaseApiClient, { APIError } from '.';
+
+// Match backend models exactly
+export interface AuditIssue {
+  severity: string;
+  description: string;
+  recommendation: string;
+}
 
 export interface AuditReportSection {
   title: string;
@@ -6,23 +13,29 @@ export interface AuditReportSection {
   flagged: boolean;
 }
 
+// Match backend request structure
 export interface AuditRunRequest {
-  audit_details: Record<string, any>;
-  audit_type?: string;
-  mongo_uri?: string;
+  audit_type: string;
+  company_name: string;
+  audit_scope: string;
+  control_families: string[]; // Will be converted to comma-separated string
 }
 
+// Match backend response structure
 export interface AuditRunResponse {
-  adk_result?: any;
-  llm_result?: string;
   score?: number;
-  issues?: string[];
+  issues?: AuditIssue[];
   report_sections?: AuditReportSection[];
   pdf_url?: string;
 }
 
-export interface AuditHistoryResponse {
-  history: any;
+// Match backend history item structure
+export interface AuditHistoryItem {
+  audit_id: string;
+  company_name: string;
+  run_date: string;
+  score: number;
+  pdf_url: string;
 }
 
 class AuditApi extends BaseApiClient {
@@ -33,35 +46,24 @@ class AuditApi extends BaseApiClient {
 
   async runAudit(
     auditRequest: AuditRunRequest,
-    documents?: File[],
-    systemLogs?: File[]
+    documents: File[]
   ): Promise<AuditRunResponse> {
     try {
       const formData = new FormData();
       
-    formData.append('audit_type', auditRequest.audit_type ?? 'general');
-    formData.append('audit_details', JSON.stringify(auditRequest.audit_details));
-    
-    if (auditRequest.mongo_uri) {
-      formData.append('mongo_uri', auditRequest.mongo_uri);
-    }
+      // Match backend form field names exactly
+      formData.append('audit_type', auditRequest.audit_type);
+      formData.append('company_name', auditRequest.company_name);
+      formData.append('audit_scope', auditRequest.audit_scope);
+      formData.append('control_families', auditRequest.control_families.join(', '));
 
-    // Add document files
-    if (documents) {
+      // Add document files
       documents.forEach((file) => {
         formData.append('documents', file);
       });
-    }
 
-    // Add system log files
-    if (systemLogs) {
-      systemLogs.forEach((file) => {
-        formData.append('system_logs', file);
-      });
-    }
-
-    return await this.makeRequest<AuditRunResponse>('/run', {
-      method: 'POST',
+      return await this.makeRequest<AuditRunResponse>('/run', {
+        method: 'POST',
         body: formData,
       });
     } catch (error) {
@@ -70,10 +72,10 @@ class AuditApi extends BaseApiClient {
     }
   }
 
-
-  async getAuditHistory(userId: string): Promise<AuditHistoryResponse> {
+  async getAuditHistory(): Promise<AuditHistoryItem[]> {
     try {
-      return await this.makeRequest<AuditHistoryResponse>('/history?user_id=${userId}', {
+      // Backend returns list directly, no userId param needed (uses JWT)
+      return await this.makeRequest<AuditHistoryItem[]>('/history', {
         method: 'GET',
       });
     } catch (error) {
@@ -84,15 +86,14 @@ class AuditApi extends BaseApiClient {
 
   async downloadPdf(fileId: string): Promise<Blob> {
     try {
-      return await this.makeRequest<Blob>('/pdf/${fileId}', {
+      return await this.makeRequest<Blob>(`/pdf/${fileId}`, {
         method: 'GET',
       });
     } catch (error) {
-      console.error('Audit history failed:', error);
-      throw new APIError(error instanceof Error ? error.message : 'Failed to get audit history', 500);
+      console.error('PDF download failed:', error);
+      throw new APIError(error instanceof Error ? error.message : 'Failed to download PDF', 500);
     }
   }
-
 }
 
 export const auditApi = new AuditApi(); 

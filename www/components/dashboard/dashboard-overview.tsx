@@ -13,73 +13,22 @@ import {
   HelpCircle,
   ChevronRight
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { cn } from '@/lib/utils';
 
-const statCards = [
-  {
-    title: 'Active Permits',
-    value: '12',
-    change: '+2 from last month',
-    icon: Building2,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100 dark:bg-blue-900',
-    trend: '+16.7%',
-    href: '/dashboard/permits'
-  },
-  {
-    title: 'Compliance Score',
-    value: '94%',
-    change: '+3% from last week',
-    icon: Shield,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100 dark:bg-green-900',
-    trend: '+3.2%',
-    href: '/dashboard/audit'
-  },
-  {
-    title: 'Documents',
-    value: '47',
-    change: '+8 uploaded today',
-    icon: FileText,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100 dark:bg-purple-900',
-    trend: '+20.5%',
-    href: '/dashboard/documents'
-  },
-  {
-    title: 'Pending Reviews',
-    value: '3',
-    change: '2 due this week',
-    icon: Clock,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100 dark:bg-orange-900',
-    trend: '-25%',
-    href: '/dashboard/permits?filter=pending'
-  },
-];
-
 const quickActions = [
-  {
-    title: 'New Permit',
-    description: 'Start a permit application',
-    icon: Building2,
-    href: '/dashboard/permits/new',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100 dark:bg-blue-900',
-    badge: 'New'
-  },
   {
     title: 'Run Audit',
     description: 'Check compliance status',
     icon: Shield,
-    href: '/dashboard/audit/new',
+    href: '/dashboard/audit',
     color: 'text-green-600',
-    bgColor: 'bg-green-100 dark:bg-green-900'
+    bgColor: 'bg-green-100 dark:bg-green-900',
+    badge: 'AI-Powered'
   },
   {
     title: 'AI Assistant',
@@ -165,50 +114,13 @@ export function DashboardOverview() {
             </p>
           </div>
           <Button 
-            onClick={() => router.push('/dashboard/permits/new')}
+            onClick={() => router.push('/dashboard/audit')}
             size="lg"
             className="sm:w-auto"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            New Permit
+            <Shield className="w-4 h-4 mr-2" />
+            Run Audit
           </Button>
-        </div>
-      </motion.div>
-
-      {/* Stats Cards */}
-      <motion.div variants={itemVariants}>
-        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
-          {statCards.map((stat) => (
-            <Card 
-              key={stat.title} 
-              className={cn(
-                "relative overflow-hidden transition-all hover:shadow-lg cursor-pointer",
-                "after:absolute after:inset-0 after:z-10 after:bg-gradient-to-r after:from-white/0 after:to-white/20 dark:after:to-white/[0.03] after:opacity-0 hover:after:opacity-100 after:transition-opacity"
-              )}
-              onClick={() => router.push(stat.href)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <span className={cn(
-                        "text-xs font-medium",
-                        stat.trend.startsWith('+') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                      )}>
-                        {stat.trend}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
-                  </div>
-                  <div className={cn("p-3 rounded-xl", stat.bgColor)}>
-                    <stat.icon className={cn("h-6 w-6", stat.color)} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </motion.div>
 
@@ -291,6 +203,40 @@ export function DashboardOverview() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Getting Started */}
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Get Started with RegOps</CardTitle>
+            <CardDescription>AI-powered regulatory operations made simple</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4">
+                <Shield className="h-12 w-12 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Compliance Auditing</h3>
+                <p className="text-sm text-muted-foreground">Run AI-powered compliance audits with detailed reports and recommendations</p>
+              </div>
+              <div className="p-4">
+                <MessageSquare className="h-12 w-12 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">AI Assistant</h3>
+                <p className="text-sm text-muted-foreground">Get intelligent help with audio and video conversations</p>
+              </div>
+            </div>
+            <div className="flex justify-center gap-4">
+              <Button onClick={() => router.push('/dashboard/audit')} size="lg">
+                <Shield className="h-4 w-4 mr-2" />
+                Start First Audit
+              </Button>
+              <Button onClick={() => router.push('/dashboard/assistant')} variant="outline" size="lg">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Try AI Assistant
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   );
 }

@@ -4,18 +4,16 @@ import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield,
-  Scan,
   AlertTriangle,
   CheckCircle,
   FileText,
   Download,
   Upload,
-  Zap,
-  Clock,
-  Target,
-  RefreshCw,
   Plus,
-  X
+  X,
+  RefreshCw,
+  Clock,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,23 +25,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { auditApi } from '@/lib/api/audit';
+import { auditApi, AuditHistoryItem, AuditRunRequest } from '@/lib/api/audit';
 import { toast } from 'sonner';
 
-interface AuditRun {
-  audit_id: string;
-  company_name: string;
-  run_date: string;
-  score: number;
-  pdf_url: string;
-}
-
 const auditTypes = [
-  { value: 'environmental', label: 'Environmental Compliance', description: 'Environmental impact and regulations' },
-  { value: 'safety', label: 'Safety Protocols', description: 'Workplace safety and health standards' },
-  { value: 'financial', label: 'Financial Compliance', description: 'Financial regulations and reporting' },
-  { value: 'operational', label: 'Operational Audit', description: 'Business operations and processes' },
-  { value: 'general', label: 'General Compliance', description: 'Comprehensive compliance review' }
+  { value: 'environmental', label: 'Environmental Compliance' },
+  { value: 'safety', label: 'Safety Protocols' },
+  { value: 'financial', label: 'Financial Compliance' },
+  { value: 'operational', label: 'Operational Audit' },
+  { value: 'general', label: 'General Compliance' }
 ];
 
 const controlFamilies = [
@@ -64,17 +54,17 @@ const controlFamilies = [
 export function AuditGenieContent() {
   const { user } = useAuthStore();
   const [isRunning, setIsRunning] = useState(false);
-  const [auditHistory, setAuditHistory] = useState<AuditRun[]>([]);
+  const [auditHistory, setAuditHistory] = useState<AuditHistoryItem[]>([]);
   const [showNewAudit, setShowNewAudit] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   
-  // Form state
-  const [formData, setFormData] = useState({
+  // Form state - match backend API exactly
+  const [formData, setFormData] = useState<AuditRunRequest>({
     audit_type: '',
     company_name: '',
     audit_scope: '',
-    control_families: [] as string[]
+    control_families: []
   });
 
   // Load audit history on mount
@@ -83,12 +73,10 @@ export function AuditGenieContent() {
   }, []);
 
   const loadAuditHistory = async () => {
-    if (!user?.id) return;
-    
     setIsLoadingHistory(true);
     try {
-      const response = await auditApi.getAuditHistory(user.id.toString());
-      setAuditHistory(response.history || []);
+      const history = await auditApi.getAuditHistory();
+      setAuditHistory(history);
     } catch (error) {
       console.error('Failed to load audit history:', error);
       toast.error('Failed to load audit history');
@@ -129,16 +117,7 @@ export function AuditGenieContent() {
     setIsRunning(true);
     
     try {
-      const auditRequest = {
-        audit_details: {
-          company_name: formData.company_name,
-          audit_scope: formData.audit_scope,
-          control_families: formData.control_families
-        },
-        audit_type: formData.audit_type
-      };
-
-      const result = await auditApi.runAudit(auditRequest, selectedFiles);
+      const result = await auditApi.runAudit(formData, selectedFiles);
       
       toast.success('Audit completed successfully!');
       
@@ -183,6 +162,16 @@ export function AuditGenieContent() {
     }
   }, []);
 
+  // Calculate stats from actual data
+  const totalAudits = auditHistory.length;
+  const avgScore = totalAudits > 0 
+    ? Math.round(auditHistory.reduce((acc, audit) => acc + audit.score, 0) / totalAudits)
+    : 0;
+  const thisMonthAudits = auditHistory.filter(audit => 
+    new Date(audit.run_date).getMonth() === new Date().getMonth() &&
+    new Date(audit.run_date).getFullYear() === new Date().getFullYear()
+  ).length;
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -196,138 +185,133 @@ export function AuditGenieContent() {
             AI-powered compliance auditing and risk assessment
           </p>
         </div>
-        <div className="flex gap-2">
-          <Dialog open={showNewAudit} onOpenChange={setShowNewAudit}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Audit
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Audit</DialogTitle>
-                <DialogDescription>
-                  Configure your compliance audit parameters and upload relevant documents.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-6">
-                {/* Basic Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="company_name">Company Name *</Label>
-                    <Input
-                      id="company_name"
-                      value={formData.company_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
-                      placeholder="Enter company name"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="audit_type">Audit Type *</Label>
-                    <Select value={formData.audit_type} onValueChange={(value) => setFormData(prev => ({ ...prev, audit_type: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select audit type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {auditTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div>
-                              <div className="font-medium">{type.label}</div>
-                              <div className="text-sm text-muted-foreground">{type.description}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
+        <Dialog open={showNewAudit} onOpenChange={setShowNewAudit}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Audit
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Audit</DialogTitle>
+              <DialogDescription>
+                Configure your compliance audit parameters and upload relevant documents.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="audit_scope">Audit Scope *</Label>
-                  <Textarea
-                    id="audit_scope"
-                    value={formData.audit_scope}
-                    onChange={(e) => setFormData(prev => ({ ...prev, audit_scope: e.target.value }))}
-                    placeholder="Describe the scope and objectives of this audit..."
-                    rows={3}
+                  <Label htmlFor="company_name">Company Name *</Label>
+                  <Input
+                    id="company_name"
+                    value={formData.company_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
+                    placeholder="Enter company name"
                   />
                 </div>
-
-                {/* Control Families */}
+                
                 <div className="space-y-2">
-                  <Label>Control Families * (Select at least one)</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                    {controlFamilies.map((family) => (
-                      <label key={family} className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.control_families.includes(family)}
-                          onChange={() => handleControlFamilyToggle(family)}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-sm">{family}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* File Upload */}
-                <div className="space-y-2">
-                  <Label>Documents * (Upload compliance documents)</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.txt"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label htmlFor="file-upload" className="cursor-pointer">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
-                      <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT files</p>
-                    </label>
-                  </div>
-                  
-                  {selectedFiles.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Selected Files ({selectedFiles.length})</Label>
-                      <div className="max-h-32 overflow-y-auto space-y-1">
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                            <span className="text-sm truncate">{file.name}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFile(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowNewAudit(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={runAudit} disabled={isRunning}>
-                    {isRunning && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
-                    {isRunning ? 'Running Audit...' : 'Run Audit'}
-                  </Button>
+                  <Label htmlFor="audit_type">Audit Type *</Label>
+                  <Select value={formData.audit_type} onValueChange={(value) => setFormData(prev => ({ ...prev, audit_type: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select audit type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {auditTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="audit_scope">Audit Scope *</Label>
+                <Textarea
+                  id="audit_scope"
+                  value={formData.audit_scope}
+                  onChange={(e) => setFormData(prev => ({ ...prev, audit_scope: e.target.value }))}
+                  placeholder="Describe the scope and objectives of this audit..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Control Families */}
+              <div className="space-y-2">
+                <Label>Control Families * (Select at least one)</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                  {controlFamilies.map((family) => (
+                    <label key={family} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.control_families.includes(family)}
+                        onChange={() => handleControlFamilyToggle(family)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm">{family}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label>Documents * (Upload compliance documents)</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
+                    <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT files</p>
+                  </label>
+                </div>
+                
+                {selectedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Selected Files ({selectedFiles.length})</Label>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                          <span className="text-sm truncate">{file.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowNewAudit(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={runAudit} disabled={isRunning}>
+                  {isRunning && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
+                  {isRunning ? 'Running Audit...' : 'Run Audit'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
@@ -338,14 +322,14 @@ export function AuditGenieContent() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Quick Stats */}
+          {/* Stats from real data */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Audits</p>
-                    <p className="text-2xl font-bold">{auditHistory.length}</p>
+                    <p className="text-2xl font-bold">{totalAudits}</p>
                   </div>
                   <Shield className="h-8 w-8 text-primary" />
                 </div>
@@ -357,11 +341,7 @@ export function AuditGenieContent() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Avg. Score</p>
-                    <p className="text-2xl font-bold">
-                      {auditHistory.length > 0 
-                        ? Math.round(auditHistory.reduce((acc, audit) => acc + audit.score, 0) / auditHistory.length)
-                        : 0}%
-                    </p>
+                    <p className="text-2xl font-bold">{avgScore}%</p>
                   </div>
                   <Target className="h-8 w-8 text-green-600" />
                 </div>
@@ -373,11 +353,7 @@ export function AuditGenieContent() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                    <p className="text-2xl font-bold">
-                      {auditHistory.filter(audit => 
-                        new Date(audit.run_date).getMonth() === new Date().getMonth()
-                      ).length}
-                    </p>
+                    <p className="text-2xl font-bold">{thisMonthAudits}</p>
                   </div>
                   <Clock className="h-8 w-8 text-blue-600" />
                 </div>
@@ -388,46 +364,44 @@ export function AuditGenieContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
-                    <p className="text-2xl font-bold">100%</p>
+                    <p className="text-sm font-medium text-muted-foreground">Reports</p>
+                    <p className="text-2xl font-bold">{totalAudits}</p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <FileText className="h-8 w-8 text-purple-600" />
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Getting Started */}
-          {auditHistory.length === 0 && (
+          {totalAudits === 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Get Started with AuditGenie</CardTitle>
                 <CardDescription>Run your first compliance audit in minutes</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="text-center space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4">
+                  <div className="p-4">
                     <Upload className="h-12 w-12 mx-auto mb-2 text-primary" />
                     <h3 className="font-semibold">1. Upload Documents</h3>
                     <p className="text-sm text-muted-foreground">Upload your compliance documents and policies</p>
                   </div>
-                  <div className="text-center p-4">
-                    <Scan className="h-12 w-12 mx-auto mb-2 text-primary" />
+                  <div className="p-4">
+                    <Shield className="h-12 w-12 mx-auto mb-2 text-primary" />
                     <h3 className="font-semibold">2. Configure Audit</h3>
                     <p className="text-sm text-muted-foreground">Select audit type and control families</p>
                   </div>
-                  <div className="text-center p-4">
+                  <div className="p-4">
                     <FileText className="h-12 w-12 mx-auto mb-2 text-primary" />
                     <h3 className="font-semibold">3. Get Results</h3>
                     <p className="text-sm text-muted-foreground">Receive detailed audit report with recommendations</p>
                   </div>
                 </div>
-                <div className="text-center">
-                  <Button onClick={() => setShowNewAudit(true)} size="lg">
-                    <Zap className="h-4 w-4 mr-2" />
-                    Start Your First Audit
-                  </Button>
-                </div>
+                <Button onClick={() => setShowNewAudit(true)} size="lg">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Start Your First Audit
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -441,7 +415,7 @@ export function AuditGenieContent() {
                 <p>Loading audit history...</p>
               </CardContent>
             </Card>
-          ) : auditHistory.length === 0 ? (
+          ) : totalAudits === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -484,16 +458,14 @@ export function AuditGenieContent() {
                           <p className="text-sm text-muted-foreground">Compliance Score</p>
                         </div>
                         
-                        {audit.pdf_url && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => downloadReport(audit.pdf_url, audit.company_name)}
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Download Report
-                          </Button>
-                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => downloadReport(audit.pdf_url, audit.company_name)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download Report
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -510,7 +482,7 @@ export function AuditGenieContent() {
               <CardDescription>Download and share compliance reports</CardDescription>
             </CardHeader>
             <CardContent>
-              {auditHistory.filter(audit => audit.pdf_url).length === 0 ? (
+              {totalAudits === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">No reports available</h3>
@@ -518,29 +490,27 @@ export function AuditGenieContent() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {auditHistory
-                    .filter(audit => audit.pdf_url)
-                    .map((audit) => (
-                      <div key={audit.audit_id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-8 w-8 text-primary" />
-                          <div>
-                            <h4 className="font-semibold">{audit.company_name} Compliance Audit</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(audit.run_date).toLocaleDateString()} • PDF • Score: {audit.score}%
-                            </p>
-                          </div>
+                  {auditHistory.map((audit) => (
+                    <div key={audit.audit_id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-primary" />
+                        <div>
+                          <h4 className="font-semibold">{audit.company_name} Compliance Audit</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(audit.run_date).toLocaleDateString()} • PDF • Score: {audit.score}%
+                          </p>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => downloadReport(audit.pdf_url, audit.company_name)}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
                       </div>
-                    ))}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => downloadReport(audit.pdf_url, audit.company_name)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

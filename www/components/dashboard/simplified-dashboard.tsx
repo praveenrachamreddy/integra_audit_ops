@@ -1,222 +1,135 @@
 'use client';
 
-import * as React from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Building2, 
   Shield, 
-  FileText, 
-  Plus,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  AlertTriangle
+  MessageSquare,
+  FileText,
+  Settings,
+  HelpCircle,
+  ChevronRight,
+  Clock
 } from 'lucide-react';
-import { useAppStore } from '@/lib/store/app-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/lib/store/auth-store';
 
-// Simplified stats with only essential metrics
-const essentialStats = [
+const features = [
   {
-    title: 'Active Permits',
-    value: '12',
-    trend: '+2',
-    icon: Building2,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 dark:bg-blue-950',
-  },
-  {
-    title: 'Compliance',
-    value: '94%',
-    trend: '+3%',
+    title: 'Compliance Auditing',
+    description: 'AI-powered compliance audits',
     icon: Shield,
+    action: 'audit',
     color: 'text-green-600',
-    bgColor: 'bg-green-50 dark:bg-green-950',
+    bgColor: 'bg-green-100 dark:bg-green-900',
+    badge: 'AI-Powered'
   },
   {
-    title: 'Pending',
-    value: '3',
-    trend: '2 due',
-    icon: Clock,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50 dark:bg-orange-950',
-  },
-];
-
-// Quick actions - simplified
-const quickActions = [
-  {
-    title: 'New Permit',
-    description: 'Start application',
-    icon: Building2,
-    action: 'smart-permit',
-  },
-  {
-    title: 'Run Audit',
-    description: 'Check compliance',
-    icon: Shield,
-    action: 'audit-genie',
-  },
-  {
-    title: 'Get Help',
-    description: 'AI assistant',
-    icon: TrendingUp,
+    title: 'AI Assistant',
+    description: 'Audio and video conversations',
+    icon: MessageSquare,
     action: 'assistant',
-  },
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100 dark:bg-purple-900',
+    badge: 'Beta'
+  }
 ];
 
-// Recent activity - simplified
 const recentActivity = [
   {
     id: 1,
-    title: 'Building Permit Approved',
-    type: 'permit',
-    status: 'approved',
+    title: 'Welcome to RegOps',
+    type: 'system',
     time: '2 hours ago',
-  },
-  {
-    id: 2,
-    title: 'Compliance Audit Completed',
-    type: 'audit',
-    status: 'completed',
-    time: '5 hours ago',
-  },
-  {
-    id: 3,
-    title: 'Environmental Review Pending',
-    type: 'review',
-    status: 'pending',
-    time: '1 day ago',
-  },
+    description: 'Get started with AI-powered regulatory operations'
+  }
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
+interface SimplifiedDashboardProps {
+  onNavigate: (page: string) => void;
+}
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
+export function SimplifiedDashboard({ onNavigate }: SimplifiedDashboardProps) {
+  const { user } = useAuthStore();
 
-export function SimplifiedDashboard() {
-  const { setCurrentPage } = useAppStore();
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved':
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'pending':
-        return <Clock className="h-4 w-4 text-orange-600" />;
-      default:
-        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-      case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200';
-      case 'pending':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200';
-      default:
-        return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200';
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 20
+      }
     }
   };
 
   return (
-    <motion.div
-      className="space-y-8"
+    <motion.div 
+      className="space-y-8 p-6"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Welcome back! Here's your regulatory overview.
-            </p>
-          </div>
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Welcome to RegOps, {user?.first_name || 'there'}! 👋
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            AI-powered regulatory operations platform. Get started with compliance auditing and intelligent assistance.
+          </p>
         </div>
       </motion.div>
 
-      {/* Essential Stats */}
-      <motion.div variants={itemVariants}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {essentialStats.map((stat, index) => (
-            <Card key={stat.title} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </p>
-                    <div className="flex items-baseline space-x-2">
-                      <p className="text-2xl font-bold text-foreground">
-                        {stat.value}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {stat.trend}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Quick Actions */}
+      {/* Main Features */}
       <motion.div variants={itemVariants}>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>
-              Get started with common tasks
-            </CardDescription>
+            <CardTitle>Main Features</CardTitle>
+            <CardDescription>Choose your preferred way to get started</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {quickActions.map((action) => (
-                <Button
-                  key={action.title}
-                  variant="outline"
-                  className="h-auto p-4 flex items-center justify-start space-x-3 hover:bg-accent"
-                  onClick={() => setCurrentPage(action.action)}
-                >
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <action.icon className="h-5 w-5 text-primary" />
+          <CardContent className="space-y-4">
+            {features.map((feature) => (
+              <Button
+                key={feature.title}
+                variant="outline"
+                className="h-auto p-6 flex items-center justify-between w-full group hover:border-primary/50"
+                onClick={() => onNavigate(feature.action)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-lg transition-colors ${feature.bgColor} group-hover:bg-primary/10`}>
+                    <feature.icon className={`h-6 w-6 ${feature.color}`} />
                   </div>
                   <div className="text-left">
-                    <div className="font-medium">{action.title}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {action.description}
+                    <div className="font-semibold flex items-center gap-2">
+                      {feature.title}
+                      {feature.badge && (
+                        <Badge variant="secondary">
+                          {feature.badge}
+                        </Badge>
+                      )}
                     </div>
+                    <div className="text-sm text-muted-foreground">{feature.description}</div>
                   </div>
-                </Button>
-              ))}
-            </div>
+                </div>
+                <ChevronRight className="h-6 w-6 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </Button>
+            ))}
           </CardContent>
         </Card>
       </motion.div>
@@ -226,33 +139,76 @@ export function SimplifiedDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest updates on your permits and compliance
-            </CardDescription>
+            <CardDescription>Latest updates on your regulatory operations</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(activity.status)}
-                    <div>
-                      <p className="font-medium text-foreground">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
+          <CardContent className="space-y-4">
+            {recentActivity.map((activity) => (
+              <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-lg border">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">{activity.title}</p>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {activity.time}
                     </div>
                   </div>
-                  <Badge variant="secondary" className={getStatusColor(activity.status)}>
-                    {activity.status}
+                  <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    {activity.type}
                   </Badge>
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 pt-4 border-t border-border">
-              <Button variant="ghost" className="w-full">
-                View All Activity
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Quick Access */}
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Access</CardTitle>
+            <CardDescription>Access tools and resources</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-center space-y-2"
+                onClick={() => onNavigate('documents')}
+              >
+                <FileText className="h-8 w-8 text-orange-600" />
+                <div className="text-center">
+                  <div className="font-medium">Documents</div>
+                  <div className="text-xs text-muted-foreground">Manage files</div>
+                </div>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-center space-y-2"
+                onClick={() => onNavigate('settings')}
+              >
+                <Settings className="h-8 w-8 text-gray-600" />
+                <div className="text-center">
+                  <div className="font-medium">Settings</div>
+                  <div className="text-xs text-muted-foreground">Configure preferences</div>
+                </div>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-center space-y-2"
+                onClick={() => onNavigate('help')}
+              >
+                <HelpCircle className="h-8 w-8 text-indigo-600" />
+                <div className="text-center">
+                  <div className="font-medium">Help</div>
+                  <div className="text-xs text-muted-foreground">Get support</div>
+                </div>
               </Button>
             </div>
           </CardContent>

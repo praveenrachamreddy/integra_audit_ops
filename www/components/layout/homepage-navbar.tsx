@@ -41,7 +41,6 @@ const navigationLinks = [
 
 const dashboardLinks = [
   { href: '/dashboard/overview', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/permits', label: 'Permits', icon: Building2 },
   { href: '/dashboard/audit', label: 'Audits', icon: Shield },
   { href: '/dashboard/assistant', label: 'AI Assistant', icon: MessageSquare },
   { href: '/dashboard/documents', label: 'Documents', icon: FileText },
@@ -108,7 +107,7 @@ export default function HomepageNavbar() {
                         } transition-colors duration-200`}
                       >
                         <link.icon className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden lg:inline">{link.label}</span>
+                        <span className="hidden xl:inline">{link.label}</span>
                         {/* Tooltip for tablet view */}
                         <span className="lg:hidden absolute z-50 px-2 py-1 text-xs bg-popover text-popover-foreground rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transform -translate-y-full -translate-x-1/2 left-1/2 transition-opacity duration-200">
                           {link.label}
