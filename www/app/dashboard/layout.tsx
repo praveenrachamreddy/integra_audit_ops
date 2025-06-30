@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: Readonly<DashboardLayoutPr
         {/* Page Content */}
         <main className="min-h-[calc(100vh-4rem-64px)]">
           <div className="px-4 sm:px-6 lg:px-8 py-8">
-            <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-8xl">
               {children}
             </div>
           </div>

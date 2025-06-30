@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authApi, TokenManager, User, RegisterRequest, LoginRequest } from '@/lib/api/auth';
+import { apiClient, TokenManager, User, RegisterRequest, LoginRequest } from '@/lib/api/auth';
 
 interface AuthState {
   user: User | null;
@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const loginData: LoginRequest = { email, password };
-          await authApi.login(loginData);
+          await apiClient.login(loginData);
           
           // Get user data after successful login
           await get().getCurrentUser();
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
             first_name: firstName,
             last_name: lastName
           };
-          await authApi.register(registerData);
+          await apiClient.register(registerData);
           set({ isLoading: false, error: null });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Registration failed';
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
         }
         
         try {
-          const user = await authApi.getCurrentUser();
+          const user = await apiClient.getCurrentUser();
           set({
             user,
             isAuthenticated: true,
@@ -104,7 +104,7 @@ export const useAuthStore = create<AuthState>()(
       },
       
       logout: () => {
-        authApi.logout();
+        apiClient.logout();
         set({
           user: null,
           isAuthenticated: false,

@@ -282,4 +282,4 @@ class ApiError extends Error {
 }
 
 // Export singleton instance
-export const authApi = new ApiClient(); 
+export const apiClient = new ApiClient(); 
