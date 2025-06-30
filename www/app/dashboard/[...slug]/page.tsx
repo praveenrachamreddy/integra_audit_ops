@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
 import { AuditGenieContent } from '@/components/dashboard/audit-genie-content';
 import { AssistantContent } from '@/components/dashboard/assistant-content';
+import { QAContent } from '@/components/dashboard/qa-content';
 import { DocumentsContent } from '@/components/dashboard/documents-content';
 import { SettingsContent } from '@/components/dashboard/settings-content';
 import { HelpContent } from '@/components/dashboard/help-content';
@@ -11,6 +12,7 @@ const routeComponents = {
   'overview': DashboardOverview,
   'audit': AuditGenieContent,
   'assistant': AssistantContent,
+  'qa': QAContent,
   'documents': DocumentsContent,
   'settings': SettingsContent,
   'help': HelpContent,

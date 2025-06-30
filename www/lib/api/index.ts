@@ -62,10 +62,14 @@ export default abstract class BaseApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_BASE_URL}${API_V_STR}${this.apiPath}${endpoint}`;
+    
+    // Don't set Content-Type for FormData - let browser handle it
+    const isFormData = options.body instanceof FormData;
+    
     const config: RequestInit = {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...options.headers,
       },
     };

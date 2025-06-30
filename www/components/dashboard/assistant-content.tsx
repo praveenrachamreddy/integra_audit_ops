@@ -14,6 +14,8 @@ import {
   VolumeX,
   Maximize2,
   Minimize2,
+  MessageSquare,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -119,9 +121,12 @@ export function AssistantContent() {
     try {
       const response = await mediaApi.startVideoConversation({
         permit_details: {
-          // Add any required details here
+          applicant_name: 'RegOps User',
+          project_type: 'General Compliance Inquiry',
+          status: 'Active'
         },
       });
+      
       if (!response?.conversation_url) {
         throw new Error('Invalid video conversation response');
       }
@@ -145,15 +150,17 @@ export function AssistantContent() {
     try {
       // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
+      
       const response = await mediaApi.startAudioConversation({
         permit_details: {
-          // Add any required details here
+          applicant_name: 'RegOps User',
+          project_type: 'General Compliance Inquiry',
+          status: 'Active'
         },
       });
       
-      // Start the ElevenLabs conversation
+      // Start the ElevenLabs conversation with the returned agent_id
       const conversationId = await conversation.startSession({
-        // agentId: ELEVENLABS_AGENT_ID
         agentId: response.agent_id
       });
       
@@ -190,17 +197,24 @@ export function AssistantContent() {
     }
   };
 
+  const handleRetry = () => {
+    setState('idle');
+    setError(null);
+    setType(null);
+  };
+
   // Selection Screen
   if (!type && state === 'idle') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-800 dark:to-slate-900">
         <div className="text-center space-y-8 max-w-md mx-auto px-4">
           <div className="space-y-4">
+            <MessageSquare className="h-16 w-16 mx-auto text-primary" />
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               AI Assistant
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Choose your preferred communication method
+              Get intelligent help with regulatory compliance questions
             </p>
           </div>
           
@@ -211,7 +225,7 @@ export function AssistantContent() {
               size="lg"
             >
               <Video className="h-6 w-6" />
-              <span>Video Call</span>
+              <span>Start Video Call</span>
             </Button>
             
             <Button
@@ -221,9 +235,13 @@ export function AssistantContent() {
               size="lg"
             >
               <Mic className="h-6 w-6" />
-              <span>Audio Call</span>
+              <span>Start Audio Call</span>
             </Button>
           </div>
+          
+          <p className="text-sm text-muted-foreground">
+            Choose your preferred communication method to get started
+          </p>
         </div>
       </div>
     );
@@ -238,7 +256,7 @@ export function AssistantContent() {
           <div className="space-y-2">
             <h3 className="text-xl font-semibold">Connecting...</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {type === 'video' ? 'Setting up video call' : 'Initializing audio call'}
+              {type === 'video' ? 'Setting up video call with AI assistant' : 'Initializing audio call with AI assistant'}
             </p>
           </div>
         </div>
@@ -257,9 +275,10 @@ export function AssistantContent() {
           </Alert>
           <div className="flex justify-center gap-4">
             <Button onClick={() => type === 'video' ? startVideoCall() : startAudioCall()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
               Retry
             </Button>
-            <Button variant="outline" onClick={endCall}>
+            <Button variant="outline" onClick={handleRetry}>
               Start Over
             </Button>
           </div>

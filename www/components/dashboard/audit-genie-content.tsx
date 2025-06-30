@@ -4,8 +4,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield,
-  AlertTriangle,
-  CheckCircle,
   FileText,
   Download,
   Upload,
@@ -58,7 +56,7 @@ export function AuditGenieContent() {
   const [showNewAudit, setShowNewAudit] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  
+
   // Form state - match backend API exactly
   const [formData, setFormData] = useState<AuditRunRequest>({
     audit_type: '',
@@ -117,9 +115,15 @@ export function AuditGenieContent() {
     setIsRunning(true);
     
     try {
+      toast.info('Starting audit analysis...', { duration: 2000 });
+      
       const result = await auditApi.runAudit(formData, selectedFiles);
       
-      toast.success('Audit completed successfully!');
+      if (result.score !== undefined) {
+        toast.success(`Audit completed! Score: ${result.score}%`);
+      } else {
+        toast.success('Audit completed successfully!');
+      }
       
       // Reload history to get the latest audit
       await loadAuditHistory();
@@ -137,7 +141,8 @@ export function AuditGenieContent() {
       
     } catch (error) {
       console.error('Audit failed:', error);
-      toast.error('Audit failed. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Audit failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsRunning(false);
     }

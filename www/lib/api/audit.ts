@@ -62,6 +62,7 @@ class AuditApi extends BaseApiClient {
         formData.append('documents', file);
       });
 
+      // Don't set Content-Type for FormData - let browser set it with boundary
       return await this.makeRequest<AuditRunResponse>('/run', {
         method: 'POST',
         body: formData,
@@ -86,9 +87,21 @@ class AuditApi extends BaseApiClient {
 
   async downloadPdf(fileId: string): Promise<Blob> {
     try {
-      return await this.makeRequest<Blob>(`/pdf/${fileId}`, {
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1${this.apiPath}/pdf/${fileId}`;
+      const accessToken = this.getAccessToken();
+      
+      const response = await fetch(url, {
         method: 'GET',
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download PDF: ${response.statusText}`);
+      }
+
+      return await response.blob();
     } catch (error) {
       console.error('PDF download failed:', error);
       throw new APIError(error instanceof Error ? error.message : 'Failed to download PDF', 500);

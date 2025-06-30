@@ -8,7 +8,9 @@ import {
   FileText, 
   Settings, 
   HelpCircle,
-  X
+  X,
+  Phone,
+  Brain
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store/app-store';
 import { Button } from '@/components/ui/button';
@@ -32,9 +34,16 @@ const navigation = [
   { 
     name: 'Assistant', 
     href: '/dashboard/assistant', 
-    icon: MessageSquare,
+    icon: Phone,
     description: 'AI assistant with voice/video',
     badge: 'Beta'
+  },
+  { 
+    name: 'Q&A', 
+    href: '/dashboard/qa', 
+    icon: Brain,
+    description: 'Regulatory questions & answers',
+    badge: 'New'
   },
   { 
     name: 'Documents', 

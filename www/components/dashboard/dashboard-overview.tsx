@@ -8,7 +8,8 @@ import {
   FileText, 
   Clock,
   Plus,
-  MessageSquare,
+  Phone,
+  Brain,
   Settings,
   HelpCircle,
   ChevronRight
@@ -33,11 +34,20 @@ const quickActions = [
   {
     title: 'AI Assistant',
     description: 'Get intelligent help',
-    icon: MessageSquare,
+    icon: Phone,
     href: '/dashboard/assistant',
     color: 'text-purple-600',
     bgColor: 'bg-purple-100 dark:bg-purple-900',
     badge: 'Beta'
+  },
+  {
+    title: 'Q&A',
+    description: 'Ask regulatory questions',
+    icon: Brain,
+    href: '/dashboard/qa',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100 dark:bg-blue-900',
+    badge: 'New'
   }
 ];
 
@@ -61,7 +71,7 @@ const tools = [
   {
     title: 'Help & Support',
     description: 'Get assistance when needed',
-    icon: HelpCircle,
+    icon: Brain,
     href: '/dashboard/help',
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-100 dark:bg-indigo-900'
@@ -219,7 +229,7 @@ export function DashboardOverview() {
                 <p className="text-sm text-muted-foreground">Run AI-powered compliance audits with detailed reports and recommendations</p>
               </div>
               <div className="p-4">
-                <MessageSquare className="h-12 w-12 mx-auto mb-2 text-primary" />
+                <Phone className="h-12 w-12 mx-auto mb-2 text-primary" />
                 <h3 className="font-semibold">AI Assistant</h3>
                 <p className="text-sm text-muted-foreground">Get intelligent help with audio and video conversations</p>
               </div>
@@ -230,7 +240,7 @@ export function DashboardOverview() {
                 Start First Audit
               </Button>
               <Button onClick={() => router.push('/dashboard/assistant')} variant="outline" size="lg">
-                <MessageSquare className="h-4 w-4 mr-2" />
+                <Phone className="h-4 w-4 mr-2" />
                 Try AI Assistant
               </Button>
             </div>
