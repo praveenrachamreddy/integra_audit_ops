@@ -12,4 +12,5 @@ class StartAudioConversationRequest(BaseModel):
 
 class AudioConversationConfigResponse(BaseModel):
     agent_id: str
-    prompt: str 
+    system_prompt: str
+    context: Dict[str, Any] 

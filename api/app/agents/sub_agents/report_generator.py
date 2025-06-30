@@ -13,11 +13,17 @@ class ReportGeneratorAgent:
     from the final, structured audit data. This is not an LLM agent.
     """
 
-    def create_pdf_report(self, score: Optional[int], issues: List[Dict[str, Any]], sections: List[Dict[str, Any]], output_dir: str) -> str:
+    def create_pdf_report(self, score: Optional[int], issues: List[Dict[str, Any]], sections: List[Dict[str, Any]], overall_severity: str, output_dir: str) -> str:
         """
         Generates a PDF report and returns the file path.
         """
-        return generate_pdf_report(sections, score, issues, output_dir=output_dir)
+        return generate_pdf_report(
+            sections=sections, 
+            score=score, 
+            issues=issues, 
+            overall_severity=overall_severity,
+            output_dir=output_dir
+        )
 
     def create_markdown_report(self, score: Optional[int], issues: List[Dict[str, Any]], sections: List[Dict[str, Any]]) -> str:
         """

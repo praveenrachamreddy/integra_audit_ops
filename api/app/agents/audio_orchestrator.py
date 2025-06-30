@@ -1,26 +1,29 @@
 import json
+import os
 from app.domain.models.media import StartAudioConversationRequest, AudioConversationConfigResponse
 from app.core.config import settings
+
+PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "media_context_prompt.txt")
 
 class AudioOrchestrator:
     def __init__(self):
         self.agent_id = settings.ELEVENLABS_AGENT_ID
+        self.base_prompt = self._load_base_prompt()
 
-    def _create_prompt_from_details(self, permit_details: dict) -> str:
-        base_prompt = (
-            "You are an expert AI assistant for RegOps, a platform that helps users navigate complex regulatory compliance. "
-            "You are having a real-time audio conversation with a user about their permit application. "
-            "Your goal is to answer their questions clearly and concisely based on the following permit data. "
-            "Do not make up information you don't have. Be polite and professional.\n\n"
-            "Here is the permit information:\n"
-        )
+    def _load_base_prompt(self) -> str:
+        try:
+            with open(PROMPT_PATH, "r") as f:
+                return f.read()
+        except FileNotFoundError:
+            return "You are a helpful assistant."
+
+    def _create_full_prompt(self, permit_details: dict) -> str:
         details_json = json.dumps(permit_details, indent=2)
-        return f"{base_prompt}{details_json}"
+        return f"{self.base_prompt}\n{details_json}"
 
     def generate_config(self, request: StartAudioConversationRequest) -> AudioConversationConfigResponse:
-        prompt = self._create_prompt_from_details(request.permit_details)
-        
         return AudioConversationConfigResponse(
             agent_id=self.agent_id,
-            prompt=prompt
+            system_prompt=self.base_prompt,
+            context=request.permit_details
         ) 
