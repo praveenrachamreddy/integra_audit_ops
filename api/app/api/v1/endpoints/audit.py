@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Response, HTTPException
+from typing import Optional
 from app.domain.models.audit_orchestrator import AuditRunResponse, AuditHistoryResponse
 from app.agents.audit_orchestrator import AuditOrchestrator
 from app.services.vertex_ai import VertexAIClient
