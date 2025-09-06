@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     MAILTRAP_INBOX_ID: str = os.getenv("MAILTRAP_INBOX_ID", "")  # Optional
     
     # CORS
-    BACKEND_CORS_ORIGINS: str = "http://localhost:3000,https://regopsai.buzz"
+    BACKEND_CORS_ORIGINS: str = os.getenv("BACKEND_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://172.16.3.63:3000")
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

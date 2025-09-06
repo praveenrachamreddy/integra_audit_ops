@@ -46,15 +46,25 @@ async def db_session_middleware(request: Request, call_next):
     return response
 
 # Set up CORS
-origins = [origin.strip() for origin in settings.BACKEND_CORS_ORIGINS.split(",")]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if settings.ENV == "development":
+    # Allow all origins in development
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Restrict origins in production
+    origins = [origin.strip() for origin in settings.BACKEND_CORS_ORIGINS.split(",")]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
