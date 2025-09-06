@@ -1,4 +1,5 @@
 import asyncio
+import google.generativeai as genai
 from google.adk.agents import LlmAgent
 from google.adk.tools import google_search
 from google.adk.runners import Runner
@@ -21,6 +22,13 @@ class ADKClient:
         self.model = settings.ADK_MODEL_NAME
         self.app_name = settings.GCP_PROJECT_NAME
         self.session_service = InMemorySessionService()
+        
+        # Configure Gemini API if not using Vertex AI
+        if not settings.GOOGLE_GENAI_USE_VERTEX and settings.GEMINI_API_KEY:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            self.gemini_model = genai.GenerativeModel(settings.ADK_MODEL_NAME)
+        else:
+            self.gemini_model = None
 
     async def ensure_session(self, user_id: str, session_id: str):
         session = await self.session_service.create_session(
@@ -31,6 +39,25 @@ class ADKClient:
         return session
 
     async def run_agent(self, agent_name: str, data: dict, user_id: str, session_id: str, tools: list = None, instruction: str = None) -> dict:
+        # If using Gemini API directly (not Vertex AI), use it instead
+        if self.gemini_model and not settings.GOOGLE_GENAI_USE_VERTEX:
+            # Use provided instruction or a default one
+            agent_instruction = instruction if instruction is not None else "You are a helpful assistant."
+
+            prompt = getattr(data, "prompt", None)
+            if prompt is None and isinstance(data, dict):
+                prompt = data.get("prompt")
+            if prompt is None:
+                prompt = str(data)
+            
+            try:
+                full_prompt = f"{agent_instruction}\n\n{prompt}"
+                response = self.gemini_model.generate_content(full_prompt)
+                return {"result": response.text}
+            except Exception as e:
+                logger.error(f"Gemini API error: {str(e)}")
+                # Fall back to ADK if Gemini fails
+        
         # Ensure session asynchronously before running agent
         await self.ensure_session(user_id, session_id)
 

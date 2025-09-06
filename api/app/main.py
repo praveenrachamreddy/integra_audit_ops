@@ -10,7 +10,9 @@ from app.api.v1.endpoints import (
     audit, 
     explain, 
     # users, 
-    media
+    media,
+    projects,
+    clients
 )
 from fastapi.openapi.utils import get_openapi
 from app.infrastructure.db import init_db, close_db
@@ -18,10 +20,10 @@ from app.infrastructure.db import init_db, close_db
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="""
-RegOps API - AI-powered compliance automation platform.
+    description=f"""
+{settings.PLATFORM_NAME} API - AI-powered compliance and project management platform for {settings.COMPANY_NAME}.
 
-This API provides endpoints for authentication, permit management, audits, and more. All endpoints are documented below. JWT-protected endpoints show a lock icon and require a valid Bearer token.
+This API provides endpoints for authentication, project management, audits, and more. All endpoints are documented below. JWT-protected endpoints show a lock icon and require a valid Bearer token.
 """,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     debug=settings.DEBUG
@@ -61,6 +63,8 @@ app.include_router(audit.router, prefix=f"{settings.API_V1_STR}/audit", tags=["A
 app.include_router(explain.router, prefix=f"{settings.API_V1_STR}/explain", tags=["Explain"])
 # app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
 app.include_router(media.router, prefix=f"{settings.API_V1_STR}/media", tags=["Media"])
+app.include_router(projects.router, prefix=f"{settings.API_V1_STR}/projects", tags=["Projects"])
+app.include_router(clients.router, prefix=f"{settings.API_V1_STR}/clients", tags=["Clients"])
 
 # Custom OpenAPI schema with JWT Bearer
 
@@ -123,7 +127,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def root() -> dict:
     """Root endpoint with API info."""
     return {
-        "message": "Welcome to RegOps AI Suite API",
+        "message": f"Welcome to {settings.PLATFORM_NAME} API",
+        "company": settings.COMPANY_NAME,
         "version": settings.VERSION,
         "environment": settings.ENV,
         "docs_url": "/docs"

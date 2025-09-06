@@ -13,11 +13,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'RegOps Platform - Regulatory Operations Made Simple',
-  description: 'AI-powered regulatory compliance and permit management platform',
-  keywords: ['regulatory', 'compliance', 'permits', 'AI', 'automation'],
-  authors: [{ name: 'RegOps Platform Team' }],
-  creator: 'RegOps Platform',
+  title: 'IntegraOps - Project Compliance Made Simple',
+  description: 'AI-powered project compliance and audit management platform for Integra',
+  keywords: ['Integra', 'compliance', 'audit', 'project management', 'AI'],
+  authors: [{ name: 'Integra Operations Team' }],
+  creator: 'Integra',
   openGraph: {
     type: 'website',
     locale: 'en_US',

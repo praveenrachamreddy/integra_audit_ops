@@ -6,6 +6,7 @@ import { QAContent } from '@/components/dashboard/qa-content';
 import { DocumentsContent } from '@/components/dashboard/documents-content';
 import { SettingsContent } from '@/components/dashboard/settings-content';
 import { HelpContent } from '@/components/dashboard/help-content';
+import { ProjectsDashboard } from '@/components/dashboard/projects-dashboard';
 
 // Map of valid routes to their components
 const routeComponents = {
@@ -16,6 +17,7 @@ const routeComponents = {
   'documents': DocumentsContent,
   'settings': SettingsContent,
   'help': HelpContent,
+  'projects': ProjectsDashboard,
 } as const;
 
 interface DashboardPageProps {

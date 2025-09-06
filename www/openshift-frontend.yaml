@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integraops-frontend
+  labels:
+    app: integraops
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: integraops
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: integraops
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: image-registry.openshift-image-registry.svc:5000/integraops/integraops-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://integraops-backend-integraops.apps.your-cluster-domain.com"
+        - name: NEXT_PUBLIC_COMPANY_NAME
+          value: "Integra"
+        - name: NEXT_PUBLIC_PLATFORM_NAME
+          value: "IntegraOps"
+        - name: NEXT_PUBLIC_TAVUS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: tavus-api-key
+        - name: NEXT_PUBLIC_TAVUS_REPLICA_ID
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: tavus-replica-id
+        - name: NEXT_PUBLIC_ELEVENLABS_AGENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: elevenlabs-agent-id
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integraops-frontend
+  labels:
+    app: integraops
+    component: frontend
+spec:
+  selector:
+    app: integraops
+    component: frontend
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: integraops-frontend
+  labels:
+    app: integraops
+    component: frontend
+spec:
+  host: integraops-frontend-integraops.apps.your-cluster-domain.com
+  to:
+    kind: Service
+    name: integraops-frontend
+  port:
+    targetPort: 3000
+  tls:
+    termination: edge

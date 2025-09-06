@@ -20,6 +20,7 @@ class AuditRunRequest(BaseModel):
     company_name: str
     audit_scope: str
     control_families: List[str]
+    project_id: Optional[str] = None
 
 class AuditRunResponse(BaseModel):
     """
@@ -34,4 +35,12 @@ class AuditHistoryRequest(BaseModel):
     user_id: str
 
 class AuditHistoryResponse(BaseModel):
-    history: dict 
+    """
+    The final, clean response containing only the essential, structured audit results.
+    """
+    audit_id: str
+    company_name: str
+    run_date: str
+    score: int
+    pdf_url: str
+    project_id: Optional[str] = None 

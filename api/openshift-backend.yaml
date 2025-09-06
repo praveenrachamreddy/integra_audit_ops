@@ -1,0 +1,154 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integraops-backend
+  labels:
+    app: integraops
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: integraops
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: integraops
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: image-registry.openshift-image-registry.svc:5000/integraops/integraops-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ENV
+          value: "production"
+        - name: DEBUG
+          value: "False"
+        - name: PORT
+          value: "8000"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: secret-key
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          value: "30"
+        - name: REFRESH_TOKEN_EXPIRE_DAYS
+          value: "7"
+        - name: MONGODB_URL
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: mongodb-url
+        - name: DATABASE_NAME
+          value: "integraops"
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: gcp-project-id
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/gcp/credentials.json"
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: gemini-api-key
+        - name: VERTEX_MODEL_NAME
+          value: "gemini-1.5-pro-001"
+        - name: ADK_MODEL_NAME
+          value: "gemini-2.0-flash"
+        - name: GOOGLE_GENAI_USE_VERTEX
+          value: "False"
+        - name: TAVUS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: tavus-api-key
+        - name: TAVUS_REPLICA_ID
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: tavus-replica-id
+        - name: ELEVENLABS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: elevenlabs-api-key
+        - name: ELEVENLABS_AGENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: elevenlabs-agent-id
+        - name: MAILTRAP_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: integraops-secrets
+              key: mailtrap-api-token
+        volumeMounts:
+        - name: gcp-credentials
+          mountPath: /etc/gcp
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: gcp-credentials
+        secret:
+          secretName: gcp-credentials
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integraops-backend
+  labels:
+    app: integraops
+    component: backend
+spec:
+  selector:
+    app: integraops
+    component: backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: integraops-backend
+  labels:
+    app: integraops
+    component: backend
+spec:
+  host: integraops-backend-integraops.apps.your-cluster-domain.com
+  to:
+    kind: Service
+    name: integraops-backend
+  port:
+    targetPort: 8000
+  tls:
+    termination: edge

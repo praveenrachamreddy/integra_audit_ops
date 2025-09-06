@@ -1,7 +1,9 @@
 {
-  "name": "regops-platform",
+  "name": "integraops-platform",
   "version": "1.0.0",
   "private": true,
+  "description": "Integra's AI-powered compliance and project management platform",
+  "author": "Integra Operations Team",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

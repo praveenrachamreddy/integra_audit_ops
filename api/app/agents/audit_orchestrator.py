@@ -28,7 +28,7 @@ class AuditOrchestrator:
         issue['recommendation'] = recommendation
         return issue
 
-    async def run_audit(self, audit_type: str, company_name: str, audit_scope: str, control_families: list, documents: List[UploadFile], user_id: str, session_id: str):
+    async def run_audit(self, audit_type: str, company_name: str, audit_scope: str, control_families: list, documents: List[UploadFile], user_id: str, session_id: str, project_id: Optional[str] = None):
         # 1. Stream files to GridFS and get their unique IDs
         upload_tasks = [save_pdf_stream_to_db(mongodb.db, doc.file, doc.filename, {"user_id": user_id, "type": "uploaded"}) for doc in documents]
         doc_ids = await asyncio.gather(*upload_tasks)
@@ -105,7 +105,8 @@ class AuditOrchestrator:
                     "user_id": str(user_id), 
                     "type": "generated",
                     "score": score,
-                    "company_name": company_name
+                    "company_name": company_name,
+                    "project_id": project_id
                 }
             )
             pdf_url = f"/api/v1/audit/pdf/{pdf_id}"
@@ -137,6 +138,7 @@ class AuditOrchestrator:
                 "company_name": metadata.get("company_name", "N/A"),
                 "run_date": doc.get("uploadDate").strftime("%Y-%m-%d %H:%M:%S"),
                 "score": metadata.get("score", "N/A"),
-                "pdf_url": f"/api/v1/audit/pdf/{doc.get('_id')}"
+                "pdf_url": f"/api/v1/audit/pdf/{doc.get('_id')}",
+                "project_id": metadata.get("project_id")
             })
         return history_items 

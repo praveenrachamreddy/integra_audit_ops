@@ -22,6 +22,7 @@ async def run_audit(
     company_name: str = Form(...),
     audit_scope: str = Form(...),
     control_families: str = Form(..., description="A comma-separated list of control families to evaluate."),
+    project_id: Optional[str] = Form(None),
     documents: list[UploadFile] = File(...),
     orchestrator: AuditOrchestrator = Depends(get_audit_orchestrator),
     current_user=Depends(get_current_user)
@@ -36,7 +37,8 @@ async def run_audit(
         control_families=control_families_list,
         documents=documents,
         user_id=str(current_user.id),
-        session_id=str(current_user.id)
+        session_id=str(current_user.id),
+        project_id=project_id
     )
     return result
 

@@ -12,7 +12,9 @@ import {
   Brain,
   Settings,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  FolderOpen,
+  BarChart3
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,12 +43,12 @@ const quickActions = [
     badge: 'Beta'
   },
   {
-    title: 'Q&A',
-    description: 'Ask regulatory questions',
-    icon: Brain,
-    href: '/dashboard/qa',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100 dark:bg-blue-900',
+    title: 'Projects',
+    description: 'Manage client projects',
+    icon: FolderOpen,
+    href: '/dashboard/projects',
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-100 dark:bg-indigo-900',
     badge: 'New'
   }
 ];
@@ -61,20 +63,20 @@ const tools = [
     bgColor: 'bg-orange-100 dark:bg-orange-900'
   },
   {
+    title: 'Project Reports',
+    description: 'View project analytics',
+    icon: BarChart3,
+    href: '/dashboard/projects',
+    color: 'text-cyan-600',
+    bgColor: 'bg-cyan-100 dark:bg-cyan-900'
+  },
+  {
     title: 'Settings',
     description: 'Configure your preferences',
     icon: Settings,
     href: '/dashboard/settings',
     color: 'text-gray-600',
     bgColor: 'bg-gray-100 dark:bg-gray-800'
-  },
-  {
-    title: 'Help & Support',
-    description: 'Get assistance when needed',
-    icon: Brain,
-    href: '/dashboard/help',
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100 dark:bg-indigo-900'
   }
 ];
 
@@ -120,7 +122,7 @@ export function DashboardOverview() {
               Welcome back, {user?.first_name || 'there'}! 👋
             </h1>
             <p className="text-muted-foreground mt-1">
-              Here's what's happening with your regulatory operations today.
+              Here's what's happening with your projects and compliance today.
             </p>
           </div>
           <Button 
@@ -229,9 +231,19 @@ export function DashboardOverview() {
                 <p className="text-sm text-muted-foreground">Run AI-powered compliance audits with detailed reports and recommendations</p>
               </div>
               <div className="p-4">
+                <FolderOpen className="h-12 w-12 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Project Management</h3>
+                <p className="text-sm text-muted-foreground">Track multiple client projects with timeline and budget monitoring</p>
+              </div>
+              <div className="p-4">
                 <Phone className="h-12 w-12 mx-auto mb-2 text-primary" />
                 <h3 className="font-semibold">AI Assistant</h3>
                 <p className="text-sm text-muted-foreground">Get intelligent help with audio and video conversations</p>
+              </div>
+              <div className="p-4">
+                <BarChart3 className="h-12 w-12 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Analytics & Reporting</h3>
+                <p className="text-sm text-muted-foreground">Gain insights with project and compliance analytics</p>
               </div>
             </div>
             <div className="flex justify-center gap-4">

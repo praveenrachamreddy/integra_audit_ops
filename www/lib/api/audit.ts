@@ -19,6 +19,7 @@ export interface AuditRunRequest {
   company_name: string;
   audit_scope: string;
   control_families: string[]; // Will be converted to comma-separated string
+  project_id?: string; // Add this line
 }
 
 // Match backend response structure
@@ -36,6 +37,7 @@ export interface AuditHistoryItem {
   run_date: string;
   score: number;
   pdf_url: string;
+  project_id?: string; // Add this line
 }
 
 class AuditApi extends BaseApiClient {
@@ -56,6 +58,11 @@ class AuditApi extends BaseApiClient {
       formData.append('company_name', auditRequest.company_name);
       formData.append('audit_scope', auditRequest.audit_scope);
       formData.append('control_families', auditRequest.control_families.join(', '));
+      
+      // Add project_id if provided
+      if (auditRequest.project_id) {
+        formData.append('project_id', auditRequest.project_id);
+      }
 
       // Add document files
       documents.forEach((file) => {

@@ -2,6 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.core.config import settings
 from fastapi import FastAPI, Request, Depends
 from typing import Generator
+import asyncio
 
 class MongoDB:
     client: AsyncIOMotorClient = None
@@ -15,6 +16,29 @@ def init_db(app: FastAPI):
     mongodb.db = mongodb.client[settings.DATABASE_NAME]
     app.mongodb_client = mongodb.client
     app.mongodb = mongodb.db
+    
+    # Create indexes for better performance
+    asyncio.create_task(create_indexes(mongodb.db))
+
+async def create_indexes(db):
+    """Create database indexes for better query performance."""
+    # Users collection indexes
+    await db.users.create_index("email", unique=True)
+    
+    # Projects collection indexes
+    await db.projects.create_index("client.id")
+    await db.projects.create_index("status")
+    await db.projects.create_index("project_type")
+    await db.projects.create_index([("name", "text"), ("description", "text")])
+    
+    # Clients collection indexes
+    await db.clients.create_index("name")
+    await db.clients.create_index("email")
+    
+    # Audit reports indexes
+    await db.fs.files.create_index("metadata.project_id")
+    await db.fs.files.create_index("metadata.user_id")
+    await db.fs.files.create_index("metadata.type")
 
 def close_db(app: FastAPI):
     """Close MongoDB client."""

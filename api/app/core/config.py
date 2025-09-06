@@ -16,7 +16,9 @@ class Settings(BaseSettings):
     PORT: int = int(os.getenv("PORT", 9090))
     
     # Project Info
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "RegOps API")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "IntegraOps API")
+    COMPANY_NAME: str = os.getenv("COMPANY_NAME", "Integra")
+    PLATFORM_NAME: str = os.getenv("PLATFORM_NAME", "IntegraOps")
     VERSION: str = os.getenv("VERSION", "1.0.0")
     API_V1_STR: str = os.getenv("API_V1_STR", "/api/v1")
     
@@ -27,7 +29,7 @@ class Settings(BaseSettings):
     
     # MongoDB
     MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "regops")
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "integraops")
     
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -63,6 +65,10 @@ class Settings(BaseSettings):
 
     # ADK
     ADK_MODEL_NAME: str = os.getenv("ADK_MODEL_NAME", "gemini-2.0-flash")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL_NAME: str = os.getenv("GEMINI_MODEL_NAME", "gemini-1.5-pro-001")
+    GEMINI_MAX_OUTPUT_TOKENS: int = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", 2048))
+    GEMINI_TEMPERATURE: float = float(os.getenv("GEMINI_TEMPERATURE", 0.7))
 
     # For streaming responses
     JINA_API_KEY: str = os.getenv("JINA_API_KEY", "")
