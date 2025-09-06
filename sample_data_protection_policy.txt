@@ -1,0 +1,69 @@
+# Data Protection Policy for Customer Portal
+
+## 1. Introduction
+This document outlines the data protection measures implemented in the Customer Portal application in compliance with GDPR and other applicable data protection regulations.
+
+## 2. Data Processing Activities
+
+### 2.1 Types of Data Processed
+- Personal Identifiable Information (PII)
+  - Names
+  - Email addresses
+  - Phone numbers
+  - Physical addresses
+- Business Data
+  - Account information
+  - Transaction history
+  - Communication records
+
+### 2.2 Lawful Basis for Processing
+- Contract performance (Article 6(1)(b))
+- Legitimate interests (Article 6(1)(f))
+- Consent where required
+
+## 3. Data Protection Measures
+
+### 3.1 Technical Measures
+- End-to-end encryption for data in transit
+- AES-256 encryption for data at rest
+- Regular security audits and penetration testing
+- Database access logging and monitoring
+
+### 3.2 Organizational Measures
+- Data protection training for all staff
+- Clear data handling procedures
+- Regular access reviews
+- Incident response procedures
+
+## 4. Data Subject Rights
+
+### 4.1 Right to Access
+- Users can request copies of their personal data
+- Response time: Within 30 days
+
+### 4.2 Right to Rectification
+- Users can request corrections to inaccurate data
+- Updates processed within 15 days
+
+### 4.3 Right to Erasure
+- Users can request deletion of their data
+- Subject to legal and business requirements
+
+### 4.4 Data Portability
+- Users can export their data in standard formats
+- Available upon request
+
+## 5. Data Retention
+- Personal data retained for 7 years after last interaction
+- Business data retained according to legal requirements
+- Regular data cleanup procedures implemented
+
+## 6. Third-Party Processors
+- All third-party processors have signed Data Processing Agreements
+- Regular audits of third-party security measures
+- Immediate termination for security breaches
+
+## 7. Breach Notification
+- Data breaches reported to supervisory authority within 72 hours
+- Affected individuals notified when high risk is identified
+- Internal incident response team activated immediately
