@@ -47,7 +47,8 @@ class ComplianceScannerAgent:
         control_families: list,
         doc_ids: list,
         user_id: str,
-        session_id: str
+        session_id: str,
+        project_id: str = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         
         if "Error" in self.prompt_template:

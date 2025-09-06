@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from tempfile import TemporaryDirectory
 from fastapi import UploadFile
 
@@ -35,7 +35,7 @@ class AuditOrchestrator:
 
         # 2. Concurrently fan-out remediation tasks as issues are streamed from the scanner
         remediation_tasks = []
-        async for issue in self.scanner.stream_issues(audit_type, company_name, audit_scope, control_families, doc_ids, user_id, session_id):
+        async for issue in self.scanner.stream_issues(audit_type, company_name, audit_scope, control_families, doc_ids, user_id, session_id, project_id):
             if "error" not in issue:
                 # Create a task for each issue and add it to the list
                 task = asyncio.create_task(self._remediate_issue(issue, user_id, session_id))
